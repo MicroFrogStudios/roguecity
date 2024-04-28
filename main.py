@@ -1,7 +1,7 @@
 import tcod
 
 from map.game_map import GameMap
-
+import typing
 import factories.entity_factories as factory
 from engine import Engine
 from map.gen.dungeon import generate_dungeon
@@ -20,6 +20,7 @@ def main():
     max_monsters_per_room = 2
    
 
+
     tileset = tcod.tileset.load_tilesheet(
         "tilesets/basic.png", 32, 8, tcod.tileset.CHARMAP_TCOD
     )
@@ -33,7 +34,7 @@ def main():
         room_max_size=room_max_size,
         map_width=map_width,
         map_height=map_height,
-        player=player,
+        engine=engine,
         max_monsters_per_room=max_monsters_per_room
     )
 

@@ -2,12 +2,10 @@ from map.game_map import GameMap
 import  map.tile_types as tiles
 from map.gen.rooms import RectangularRoom, tunnel_between
 import random
-from typing import Iterator, List, Tuple, TYPE_CHECKING
-from classes.entity import Entity
+from typing import List, TYPE_CHECKING
 import factories.entity_factories as factory
 
-if TYPE_CHECKING:
-    from engine import Engine
+from engine import Engine
 
 def generate_dungeon(
     max_rooms: int,
