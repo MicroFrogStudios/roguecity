@@ -2,9 +2,12 @@ from map.game_map import GameMap
 import  map.tile_types as tiles
 from map.gen.rooms import RectangularRoom, tunnel_between
 import random
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, TYPE_CHECKING
 from classes.entity import Entity
+import factories.entity_factories as factory
 
+if TYPE_CHECKING:
+    from engine import Engine
 
 def generate_dungeon(
     max_rooms: int,
@@ -12,10 +15,13 @@ def generate_dungeon(
     room_max_size: int,
     map_width: int,
     map_height: int,
-    player: Entity,
+    engine: Engine,
+    max_monsters_per_room: int,
+
 ) -> GameMap:
     """Generate a new dungeon map."""
-    dungeon = GameMap(map_width, map_height)
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player])
 
     rooms: List[RectangularRoom] = []
 
@@ -36,10 +42,11 @@ def generate_dungeon(
 
         # Dig out this rooms inner area.
         dungeon.tiles[new_room.inner] = tiles.new_floor()
+        place_entities(new_room,dungeon,max_monsters_per_room)
 
         if len(rooms) == 0:
             # The first room, where the player starts.
-            player.x, player.y = new_room.center
+            player.place(*new_room.center, dungeon)
         else:  # All rooms after the first.
             # Dig out a tunnel between this room and the previous one.
             for x, y in tunnel_between(rooms[-1].center, new_room.center):
@@ -49,3 +56,17 @@ def generate_dungeon(
         rooms.append(new_room)
 
     return dungeon
+
+def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: int,
+) -> None:
+    number_of_monsters = random.randint(0, maximum_monsters)
+
+    for i in range(number_of_monsters):
+        x = random.randint(room.x1 + 1, room.x2 - 1)
+        y = random.randint(room.y1 + 1, room.y2 - 1)
+
+        if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
+            if random.random() < 0.8:
+                factory.orc.spawn(dungeon,x,y)
+            else:
+                factory.troll.spawn(dungeon,x,y)
