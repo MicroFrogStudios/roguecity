@@ -5,27 +5,34 @@ from typing import TYPE_CHECKING
 from tcod.context import Context
 from tcod.console import Console
 
-from inputHandlers import EventHandler
+from inputHandlers import MainGameEventHandler
 from tcod.map import compute_fov
 import tcod.constants as tconst
 
 if TYPE_CHECKING:
     from classes.entity import Entity
     from map.game_map import GameMap
+    from classes.actor import Actor
 
 class Engine:
     game_map: GameMap
 
-    def __init__(self, player: Entity):
-        self.event_handler: EventHandler = EventHandler(self)
+    def __init__(self, player: Actor):
+        self.event_handler: MainGameEventHandler = MainGameEventHandler(self)
         self.player = player
 
     def handle_enemy_turns(self) -> None:
-        for entity in self.game_map.entities - {self.player}:
-            print(f'The {entity.name} wonders when it will get to take a real turn.')
+        for entity in set(self.game_map.actors) - {self.player}:
+            if entity.ai:
+                entity.ai.perform()
 
     def render(self, console: Console, context: Context) -> None:
         self.game_map.render(console)
+        console.print(
+            x=1,
+            y=47,
+            string=f"HP: {self.player.fighter.hp}/{self.player.fighter.max_hp}",
+        )
         context.present(console)
         console.clear()
 
