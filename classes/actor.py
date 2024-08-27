@@ -4,7 +4,7 @@ import copy
 from classes.entity import Entity
 from typing import Optional, Type, Tuple, TYPE_CHECKING
 from enums.render_order import RenderOrder
-
+import enums.color as ecolor
 if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.fighter_component import Fighter
@@ -17,10 +17,11 @@ class Actor(Entity):
         x: int = 0,
         y: int = 0,
         char: str = "?",
-        color: Tuple[int, int, int] = (255, 255, 255),
+        color: Tuple[int, int, int] = ecolor.white,
         name: str = "<Unnamed>",
         ai_cls: Type[BaseAI],
-        fighter: Fighter
+        fighter: Fighter,
+
     ):
         super().__init__(
             x=x,
