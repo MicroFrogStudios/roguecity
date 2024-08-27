@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
-
-from tcod.context import Context
 from tcod.console import Console
 from message_log import MessageLog
 from inputHandlers import MainGameEventHandler
 from tcod.map import compute_fov
 import tcod.constants as tconst
-from utils.render_functions import render_bar
+from utils.render_functions import render_bar, render_names_at_mouse_location
 if TYPE_CHECKING:
     from classes.entity import Entity
     from map.game_map import GameMap
@@ -21,13 +19,14 @@ class Engine:
         self.event_handler: MainGameEventHandler = MainGameEventHandler(self)
         self.player = player
         self.message_log = MessageLog()
+        self.mouse_location = (0, 0)
 
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
             if entity.ai:
                 entity.ai.perform()
 
-    def render(self, console: Console, context: Context) -> None:
+    def render(self, console: Console) -> None:
         self.game_map.render(console)
         self.message_log.render(console=console,x=21,y=45, width=40, height=5)
         render_bar(
@@ -36,8 +35,9 @@ class Engine:
             maximum_value=self.player.fighter.max_hp,
             total_width=20,
         )
-        context.present(console)
-        console.clear()
+
+        render_names_at_mouse_location(console=console, x=21, y=44, engine=self)
+        
 
     def update_fov(self) -> None:
         """Recompute the visible area based on the players point of view."""
