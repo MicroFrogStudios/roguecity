@@ -7,6 +7,7 @@ from engine import Engine
 from map.gen.dungeon import generate_dungeon
 import copy
 import enums.color as color
+import traceback
 
 def main():
     screen_width = 80
@@ -19,6 +20,7 @@ def main():
     room_min_size = 6
     max_rooms = 30
     max_monsters_per_room = 2
+    max_items_per_room = 2
    
 
 
@@ -36,7 +38,8 @@ def main():
         map_width=map_width,
         map_height=map_height,
         engine=engine,
-        max_monsters_per_room=max_monsters_per_room
+        max_monsters_per_room=max_monsters_per_room,
+        max_items_per_room=max_items_per_room
     )
 
     engine.update_fov()
@@ -57,7 +60,14 @@ def main():
             context.present(root_console)
             engine.render(console=root_console)
 
-            engine.event_handler.handle_events(context)
+            try:
+                for event in tcod.event.wait():
+                    context.convert_event(event)
+                    engine.event_handler.handle_events(event)
+            except Exception:  # Handle exceptions in game.
+                traceback.print_exc()  # Print error to stderr.
+                # Then print the error to the message log.
+                engine.message_log.add_message(traceback.format_exc(), color.error)
             
             
 

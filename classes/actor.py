@@ -8,7 +8,7 @@ import enums.color as ecolor
 if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.fighter_component import Fighter
-
+    from components.inventory_component import Inventory
 
 class Actor(Entity):
     def __init__(
@@ -21,13 +21,14 @@ class Actor(Entity):
         name: str = "<Unnamed>",
         ai_cls: Type[BaseAI],
         fighter: Fighter,
+        inventory: Inventory
 
     ):
         super().__init__(
             x=x,
             y=y,
             char=char,
-            color=color,
+            fgColor=color,
             name=name,
             blocks_movement=True,
             render_order=RenderOrder.ACTOR,
@@ -36,7 +37,9 @@ class Actor(Entity):
         self.ai: Optional[BaseAI] = ai_cls(self)
 
         self.fighter = fighter
-        self.fighter.entity = self
+        self.fighter.parent = self
+        self.inventory = inventory
+        self.inventory.parent = self
 
     @property
     def is_alive(self) -> bool:

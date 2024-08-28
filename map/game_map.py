@@ -5,6 +5,7 @@ from typing import Iterable, Iterator, Optional, TYPE_CHECKING
 import numpy as np  # type: ignore
 from tcod.console import Console
 from classes.actor import Actor
+from classes.item import Item
 import map.tile_types as tile_types
 
 if TYPE_CHECKING:
@@ -26,13 +27,20 @@ class GameMap:
         self.explored = np.full((width, height), fill_value=False, order="F")
 
         # self.tiles[30:33, 22] = tile_types.new_wall()
-
+    
+    @property
+    def gamemap(self) -> GameMap: 
+        return self
+    
     @property
     def actors(self) -> Iterator[Actor]:
         yield  from(
             entity for entity in self.entities if isinstance(entity,Actor) and entity.is_alive
         )
 
+    @property
+    def items(self) -> Iterator[Item]:
+        yield from (entity for entity in self.entities if isinstance(entity, Item))
 
     def get_blocking_entity_at_location(self, location_x: int, location_y: int) -> Optional[Entity]:
         for entity in self.entities:
@@ -71,4 +79,4 @@ class GameMap:
         for entity in entities_sorted_for_rendering:
             # Only print entities that are in the FOV
             if self.visible[entity.x, entity.y]:
-                console.print(entity.x, entity.y, entity.char, fg=entity.color)
+                console.print(entity.x, entity.y, entity.char, fg=entity.fgColor,bg=entity.bgColor)
