@@ -76,4 +76,13 @@ def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: in
         y = random.randint(room.y1 + 1, room.y2 - 1)
 
         if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
-            factory.health_potion.spawn(dungeon, x, y)
+            item_chance = random.random()
+
+            if item_chance < 0.6:
+                factory.health_potion.spawn(dungeon, x, y)
+            elif item_chance < 0.8:
+                factory.fireball_scroll.spawn(dungeon, x, y)
+            elif item_chance < 0.9:
+                factory.confusion_scroll.spawn(dungeon, x, y)
+            else:
+                factory.lightning_scroll.spawn(dungeon, x, y)
