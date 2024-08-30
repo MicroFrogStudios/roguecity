@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from tcod.console import Console
 from message_log import MessageLog
-from inputHandlers import MainGameEventHandler
+
 from tcod.map import compute_fov
 import exceptions
 import tcod.constants as tconst
@@ -17,7 +17,6 @@ class Engine:
     game_map: GameMap
 
     def __init__(self, player: Actor):
-        self.event_handler: MainGameEventHandler = MainGameEventHandler(self)
         self.player = player
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)

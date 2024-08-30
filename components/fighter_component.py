@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 from enums.render_order import RenderOrder
-from inputHandlers import GameOverEventHandler
 import enums.color as color
 if TYPE_CHECKING:
     from classes.actor import Actor
@@ -32,7 +31,7 @@ class Fighter(BaseComponent):
         if self.engine.player is self.parent:
             death_message = "You died!"
             death_msg_color = color.player_die
-            self.engine.event_handler = GameOverEventHandler(self.engine)
+            
         else:
             death_message = f"{self.parent.name} is dead!"
             death_msg_color = color.enemy_die
