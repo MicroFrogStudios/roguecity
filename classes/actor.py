@@ -7,7 +7,7 @@ from enums.render_order import RenderOrder
 import enums.color as ecolor
 if TYPE_CHECKING:
     from components.ai import BaseAI
-    from components.fighter_component import Fighter
+    from components.fighter_component import Fighter, Level
     from components.inventory_component import Inventory
 
 class Actor(Entity):
@@ -21,7 +21,8 @@ class Actor(Entity):
         name: str = "<Unnamed>",
         ai_cls: Type[BaseAI],
         fighter: Fighter,
-        inventory: Inventory
+        inventory: Inventory,
+        level: Level,
 
     ):
         super().__init__(
@@ -38,8 +39,12 @@ class Actor(Entity):
 
         self.fighter = fighter
         self.fighter.parent = self
+        
         self.inventory = inventory
         self.inventory.parent = self
+
+        self.level = level
+        self.level.parent = self
 
     @property
     def is_alive(self) -> bool:

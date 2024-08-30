@@ -51,12 +51,18 @@ def main():
         except exceptions.QuitWithoutSaving:
             raise
         except SystemExit:  # Save and quit.
-            # TODO: Add the save function here
+            save_game(handler, "savegame.sav")
             raise
         except BaseException:  # Save on any other unexpected exception.
-            # TODO: Add the save function here
+            save_game(handler, "savegame.sav")
             raise
-            
+
+
+def save_game(handler: inputHandlers.BaseEventHandler, filename: str) -> None:
+    """If the current event handler has an active Engine then save it."""
+    if isinstance(handler, inputHandlers.EventHandler):
+        handler.engine.save_as(filename)
+        print("Game saved.")
 
 
 if __name__ == "__main__":
