@@ -112,7 +112,7 @@ class GameMap:
         """Return True if x and y are inside of the bounds of this map."""
         return 0 <= x < self.width and 0 <= y < self.height
 
-    def render(self, console: Console) -> None:
+    def render(self, console: Console, player_x,player_y) -> None:
         """
         Renders the map.
 
@@ -120,9 +120,33 @@ class GameMap:
         If it isn't, but it's in the "explored" array, then draw it with the "dark" colors.
         Otherwise, the default is "SHROUD".
         """
+        x_left = player_x-console.width//2
+        x_right = player_x+console.width//2
+
+        if x_left < 0:
+            x_right =console.width
+            x_left = 0
+        if x_right > self.width:
+            x_left = self.width - console.width
+            x_right = self.width
+
+        y_left = player_y-console.height//2
+        y_right = player_y+console.height//2
+        
+        if y_left < 0:
+            y_right =console.height
+            y_left = 0
+        if y_right > self.height:
+            y_left = self.height - console.height
+            y_right = self.height
+
+        camera_tiles = self.tiles[x_left:x_right, y_left:y_right]
+        camera_visible = self.visible[x_left:x_right, y_left:y_right]
+        camera_explored = self.explored[x_left:x_right, y_left:y_right]
+
         console.rgb[0:self.width, 0:self.height] = np.select(
-            condlist=[self.visible, self.explored],
-            choicelist=[self.tiles["light"], self.tiles["dark"]],
+            condlist=[camera_visible, camera_explored],
+            choicelist=[camera_tiles["light"], camera_tiles["dark"]],
             default=tile_types.SHROUD,
         )
         entities_sorted_for_rendering = sorted(
@@ -130,5 +154,7 @@ class GameMap:
         )
         for entity in entities_sorted_for_rendering:
             # Only print entities that are in the FOV
-            if self.visible[entity.x, entity.y]:
-                console.print(entity.x, entity.y, entity.char, fg=entity.fgColor,bg=entity.bgColor)
+            camera_ref_x =  entity.x - x_left
+            camera_ref_y = entity.y - y_left
+            if self.visible[entity.x,entity.y]:
+                console.print(camera_ref_x, camera_ref_y, entity.char, fg=entity.fgColor,bg=entity.bgColor)

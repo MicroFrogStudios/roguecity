@@ -34,7 +34,7 @@ class Engine:
                     pass # Ignore impossible action exceptions from AI.
 
     def render(self, console: Console) -> None:
-        self.game_map.render(console)
+        self.game_map.render(console, self.player.x, self.player.y)
         self.message_log.render(console=console,x=21,y=45, width=40, height=5)
         rend.render_bar(
             console=console,

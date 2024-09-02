@@ -14,18 +14,22 @@ def main():
     screen_height = 50
 
 
-    tileset = tcod.tileset.load_tilesheet(
+    tileset_basic = tcod.tileset.load_tilesheet(
         "tilesets/basic.png", 32, 8, tcod.tileset.CHARMAP_TCOD
     )
 
+    tileset = tcod.tileset.load_tilesheet(
+        "tilesets/curses_640x300.png", 16, 16, tcod.tileset.CHARMAP_CP437
+    )
+    
 
     
 
     handler: inputHandlers.BaseEventHandler = setup.MainMenu()
 
-    with tcod.context.new_terminal(
-        screen_width,
-        screen_height,
+    with tcod.context.new(
+        columns=160,
+        rows=80,
         tileset=tileset,
         title="Rogue City project",
         vsync=True,
@@ -35,7 +39,7 @@ def main():
             while True:
                 root_console.clear()
                 handler.on_render(console=root_console)
-                context.present(root_console)
+                context.present(root_console,keep_aspect=True, integer_scaling=True)
 
                 try:
                     for event in tcod.event.wait():
