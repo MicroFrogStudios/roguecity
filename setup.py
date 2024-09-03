@@ -18,15 +18,17 @@ from map.game_map import GameWorld
 
 
 # Load the background image and remove the alpha channel.
-background_image = tcod.image.load("menu_background.png")[:, :, :3]
+background_image = tcod.image.load("red_egg.png")[:, :, :3]
 
 
 def new_game() -> Engine:
     """Return a brand new game session as an Engine instance."""
-    map_width = 180
-    map_height = 60
+    
+    # Map dimensions, cant be smaller than camera/console sizes
+    map_width = 200
+    map_height = 200
 
-    room_max_size = 10
+    room_max_size = 30
     room_min_size = 6
     max_rooms = 30
 

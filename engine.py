@@ -24,6 +24,11 @@ class Engine:
         self.player = player
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
+        # Camera view, cant be bigger than console.
+        self.camera_width = 80
+        self.camera_height = 40
+        (self.x_left_ref,self.x_right_ref, self.y_left_ref, self.y_right_ref) = (0,0,self.camera_width,self.camera_height)
+
 
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
@@ -34,7 +39,7 @@ class Engine:
                     pass # Ignore impossible action exceptions from AI.
 
     def render(self, console: Console) -> None:
-        self.game_map.render(console, self.player.x, self.player.y)
+        self.game_map.render(console)
         self.message_log.render(console=console,x=21,y=45, width=40, height=5)
         rend.render_bar(
             console=console,
@@ -66,3 +71,40 @@ class Engine:
         save_data = lzma.compress(pickle.dumps(self))
         with open(filename, "wb") as f:
             f.write(save_data)
+
+    def map_to_camera_coordinates(self,map_x,map_y):
+        return (map_x - self.x_left_ref, map_y - self.y_left_ref)
+
+    def camera_to_map_coordinates(self,camera_x,camera_y):
+        return (camera_x + self.x_left_ref, camera_y + self.y_left_ref)
+
+    def update_camera_references(self):
+
+        x_left = self.player.x-self.camera_width//2
+        x_right = self.player.x+self.camera_width//2
+
+        if x_left < 0:
+            x_right =self.camera_width
+            x_left = 0
+        if x_right > self.game_map.width:
+            x_left = self.game_map.width - self.camera_width
+            x_right = self.game_map.width
+
+        y_left = self.player.y-self.camera_height//2
+        y_right = self.player.y+self.camera_height//2
+        
+        if y_left < 0:
+            y_right =self.camera_height
+            y_left = 0
+        if y_right > self.game_map.height:
+            y_left = self.game_map.height - self.camera_height
+            y_right = self.game_map.height
+
+        (self.x_left_ref,self.x_right_ref, self.y_left_ref, self.y_right_ref) = (x_left,x_right,y_left,y_right)
+
+    def in_camera_view(self,map_x,map_y):
+          return (map_x > self.x_left_ref and
+            map_x < self.x_right_ref and
+            map_y > self.y_left_ref and
+            map_y < self.y_right_ref)
+        

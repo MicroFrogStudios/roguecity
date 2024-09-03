@@ -4,6 +4,7 @@ import os
 from typing import Callable, Optional, Tuple, TYPE_CHECKING, Union
 
 import tcod.event
+import tcod.libtcodpy
 
 import actions
 from actions import (
@@ -136,10 +137,12 @@ class EventHandler(BaseEventHandler):
         return True
 
     def ev_mousemotion(self, event: tcod.event.MouseMotion) -> None:
-        if self.engine.game_map.in_bounds(event.tile.x, event.tile.y):
-            self.engine.mouse_location = event.tile.x, event.tile.y
+        (x,y) = self.engine.camera_to_map_coordinates(event.tile.x, event.tile.y)
+        if self.engine.game_map.in_bounds(x, y) and self.engine.in_camera_view(x,y):
+            self.engine.mouse_location = x, y
 
     def on_render(self, console: tcod.console.Console) -> None:
+        self.engine.update_camera_references()
         self.engine.render(console)
 
 
@@ -224,7 +227,7 @@ class HistoryViewer(EventHandler):
         # Draw a frame with a custom banner title.
         log_console.draw_frame(0, 0, log_console.width, log_console.height)
         log_console.print_box(
-            0, 0, log_console.width, 1, "┤Message history├", alignment=tcod.CENTER
+            0, 0, log_console.width, 1, "┤Message history├", alignment=tcod.libtcodpy.CENTER
         )
 
         # Render the message log using the cursor parameter.
@@ -386,7 +389,10 @@ class SelectIndexHandler(AskUserEventHandler):
     def on_render(self, console: tcod.console.Console) -> None:
         """Highlight the tile under the cursor."""
         super().on_render(console)
-        x, y = self.engine.mouse_location
+        x, y = self.engine.mouse_location 
+        x-= self.engine.x_left_ref
+        y-= self.engine.y_left_ref
+
         console.rgb["bg"][x, y] = color.white
         console.rgb["fg"][x, y] = color.black
 
@@ -407,8 +413,8 @@ class SelectIndexHandler(AskUserEventHandler):
             x += dx * modifier
             y += dy * modifier
             # Clamp the cursor index to the map size.
-            x = max(0, min(x, self.engine.game_map.width - 1))
-            y = max(0, min(y, self.engine.game_map.height - 1))
+            x = max(self.engine.x_left_ref, min(x, self.engine.x_right_ref - 1))
+            y = max(self.engine.y_left_ref, min(y, self.engine.y_right_ref - 1))
             self.engine.mouse_location = x, y
             return None
         elif key in CONFIRM_KEYS:
@@ -466,7 +472,7 @@ class AreaRangedAttackHandler(SelectIndexHandler):
         super().on_render(console)
 
         x, y = self.engine.mouse_location
-
+        x, y = self.engine.map_to_camera_coordinates(x,y)
         # Draw a rectangle around the targeted area, so the player can see the affected tiles.
         console.draw_frame(
             x=x - self.radius - 1,
@@ -525,7 +531,7 @@ class LevelUpEventHandler(AskUserEventHandler):
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         player = self.engine.player
         key = event.sym
-        index = key - tcod.event.K_a
+        index = key - tcod.event.KeySym.a
 
         if 0 <= index <= 2:
             if index == 0:
