@@ -13,7 +13,9 @@ class Item(Entity):
         char: str = "?",
         color: Tuple[int, int, int] = (255, 255, 255),
         name: str = "<Unnamed>",
-        consumable: Consumable,
+        description: str = "<Missing Description>",
+        consumable: Consumable = None,
+        icon : str = "assets\sprites\\red_egg.png"
     ):
         super().__init__(
             x=x,
@@ -21,9 +23,11 @@ class Item(Entity):
             char=char,
             fgColor=color,
             name=name,
+            description=description,
             blocks_movement=False,
             render_order=RenderOrder.ITEM,
+            icon = icon
         )
-
-        self.consumable = consumable
-        self.consumable.parent = self
+        if consumable is not None:
+            self.consumable = consumable
+            self.consumable.parent = self

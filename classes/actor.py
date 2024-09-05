@@ -19,10 +19,12 @@ class Actor(Entity):
         char: str = "?",
         color: Tuple[int, int, int] = ecolor.white,
         name: str = "<Unnamed>",
+        description: str = "<Missing description>",
         ai_cls: Type[BaseAI],
         fighter: Fighter,
         inventory: Inventory,
         level: Level,
+        icon: str = "assets\sprites\\red_egg.png",
 
     ):
         super().__init__(
@@ -31,8 +33,10 @@ class Actor(Entity):
             char=char,
             fgColor=color,
             name=name,
+            description=description,
             blocks_movement=True,
             render_order=RenderOrder.ACTOR,
+            icon=icon
         )
 
         self.ai: Optional[BaseAI] = ai_cls(self)

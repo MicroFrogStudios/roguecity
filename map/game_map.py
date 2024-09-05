@@ -25,11 +25,11 @@ class GameWorld:
         engine: Engine,
         map_width: int,
         map_height: int,
-        max_rooms: int,
-        room_min_size: int,
-        room_max_size: int,
-        max_monsters_per_room: int,
-        max_items_per_room: int,
+        max_rooms: int = 1,
+        room_min_size: int = 5,
+        room_max_size: int = 10,
+        max_monsters_per_room: int = 1,
+        max_items_per_room: int = 1,
         current_floor: int = 0
     ):
         self.engine = engine
@@ -46,6 +46,16 @@ class GameWorld:
         self.max_items_per_room = max_items_per_room
 
         self.current_floor = current_floor
+
+    def test_world(self) -> None:
+        self.engine.game_map = GameMap(self.engine, self.map_width, self.map_height, entities=[self.engine.player])
+        from map.gen.rooms import RectangularRoom
+        room = RectangularRoom(1,1,self.map_width-1,self.map_height-1)
+        self.engine.game_map.tiles[room.inner] = tile_types.new_floor()
+        self.engine.player.place(*room.center, self.engine.game_map)
+        from factories.entity_factories import mystery_egg
+        mystery_egg.spawn(self.engine.game_map,*room.center)
+        return None
 
     def generate_floor(self) -> None:
         from map.gen.dungeon import generate_dungeon
@@ -130,7 +140,7 @@ class GameMap:
         camera_visible = self.visible[x_left:x_right, y_left:y_right]
         camera_explored = self.explored[x_left:x_right, y_left:y_right]
 
-        console.rgb[0:self.engine.camera_width, 0:self.engine.camera_height] = np.select(
+        console.rgb[self.engine.camera_x_offset:self.engine.camera_width+ self.engine.camera_x_offset, 0:self.engine.camera_height] = np.select(
             condlist=[camera_visible, camera_explored],
             choicelist=[camera_tiles["light"], camera_tiles["dark"]],
             default=tile_types.SHROUD,
@@ -140,7 +150,6 @@ class GameMap:
         )
         for entity in entities_sorted_for_rendering:
             # Only print entities that are in the FOV
-            camera_ref_x =  entity.x - x_left
-            camera_ref_y = entity.y - y_left
+            camera_ref_x,camera_ref_y = self.engine.map_to_camera_coordinates(entity.x,entity.y)
             if self.visible[entity.x,entity.y]:
                 console.print(camera_ref_x, camera_ref_y, entity.char, fg=entity.fgColor,bg=entity.bgColor)

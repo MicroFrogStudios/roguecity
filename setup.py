@@ -18,7 +18,7 @@ from map.game_map import GameWorld
 
 
 # Load the background image and remove the alpha channel.
-background_image = tcod.image.load("red_egg.png")[:, :, :3]
+background_image = tcod.image.load("assets/sprites/red_egg.png")[:, :, :3]
 
 
 def new_game() -> Engine:
@@ -54,6 +54,24 @@ def new_game() -> Engine:
     engine.update_fov()    
     engine.message_log.add_message(
         "Hello and welcome, adventurer, to yet another dungeon!", color.welcome_text
+    )
+    return engine
+
+def test_game() -> Engine:
+    map_width = 100
+    map_height = 100
+    player = copy.deepcopy(entity_factories.player)
+    engine = Engine(player=player)
+
+    engine.game_world = GameWorld(
+        engine=engine,
+        map_width=map_width,
+        map_height=map_height,
+    )
+    engine.game_world.test_world()
+    engine.update_fov()    
+    engine.message_log.add_message(
+        "Hello and welcome, to the test chamber", color.welcome_text
     )
     return engine
 
@@ -116,5 +134,7 @@ class MainMenu(input_handlers.BaseEventHandler):
                 return input_handlers.PopupMessage(self, f"Failed to load save:\n{exc}")
         elif event.sym == tcod.event.KeySym.n:
             return input_handlers.MainGameEventHandler(new_game())
+        elif event.sym == tcod.event.KeySym.t:
+            return input_handlers.MainGameEventHandler(test_game())
 
         return None

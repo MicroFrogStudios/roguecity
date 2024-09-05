@@ -390,8 +390,7 @@ class SelectIndexHandler(AskUserEventHandler):
         """Highlight the tile under the cursor."""
         super().on_render(console)
         x, y = self.engine.mouse_location 
-        x-= self.engine.x_left_ref
-        y-= self.engine.y_left_ref
+        x, y = self.engine.map_to_camera_coordinates(x,y)
 
         console.rgb["bg"][x, y] = color.white
         console.rgb["fg"][x, y] = color.black

@@ -27,8 +27,10 @@ class Entity:
         fgColor: Tuple[int, int, int] = (255, 255, 255),
         bgColor = None,
         name: str = "<Unnamed>",
+        description: str = "<description missing>",
         blocks_movement: bool = False,
         render_order: RenderOrder = RenderOrder.CORPSE,
+        icon: str = "assets\sprites\\red_egg.png",
     ):
         self.x = x
         self.y = y
@@ -36,8 +38,10 @@ class Entity:
         self.fgColor = fgColor
         self.bgColor = bgColor 
         self.name = name
+        self.description = description
         self.blocks_movement = blocks_movement
         self.render_order = render_order
+        self.icon = icon
         if parent:
             # If parent isn't provided now then it will be set later.
             self.parent = parent

@@ -10,16 +10,19 @@ player = Actor(
     char="@",
     color=(255, 255, 255),
     name="Player",
+    description= "This is you",
     ai_cls=HostileEnemy,
     fighter=Fighter(hp=30, defense=2, power=5),
     inventory=Inventory(capacity=26),
     level=Level(level_up_base=200),
+    icon= "assets\sprites\magito_azul.png"
 )
 
 orc = Actor(
     char="o",
     color=(63, 127, 63),
     name="Orc",
+    description= "A foul beast coming from the deepest caves back in the shadow lands, now frenzied in the search for meat and blood",
     ai_cls=HostileEnemy,
     fighter=Fighter(hp=10, defense=0, power=3),
     inventory=Inventory(capacity=0),
@@ -61,4 +64,11 @@ fireball_scroll = Item(
     color=(255, 0, 0),
     name="Fireball Scroll",
     consumable=consumable.FireballDamageConsumable(damage=12, radius=3),
+)
+
+mystery_egg = Item(
+    char="o",
+    color=(240,0,0),
+    name= "Mysterious Egg",
+    description="Red egg emanating a strange power"
 )

@@ -10,7 +10,7 @@ import exceptions
 import inputHandlers
 
 def main():
-    screen_width = 80
+    screen_width = 120
     screen_height = 50
 
 
@@ -21,6 +21,10 @@ def main():
     tileset = tcod.tileset.load_tilesheet(
         "tilesets/curses_640x300.png", 16, 16, tcod.tileset.CHARMAP_CP437
     )
+
+    # tileset = tcod.tileset.load_tilesheet(
+    #     "tilesets/curses_square_16x16.png", 16, 16, tcod.tileset.CHARMAP_CP437
+    # )
     
 
     
@@ -28,8 +32,7 @@ def main():
     handler: inputHandlers.BaseEventHandler = setup.MainMenu()
 
     with tcod.context.new(
-        columns=160,
-        rows=80,
+
         tileset=tileset,
         title="Rogue City project",
         vsync=True,

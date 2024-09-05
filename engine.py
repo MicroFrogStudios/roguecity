@@ -4,17 +4,19 @@ import lzma
 import pickle
 from typing import TYPE_CHECKING
 from tcod.console import Console
-from message_log import MessageLog
+from interface.message_log import MessageLog
 
 from tcod.map import compute_fov
 import exceptions
 import tcod.constants as tconst
-import utils.render_functions as rend
+
+import interface.render_functions as rend
 
 if TYPE_CHECKING:
-    from classes.entity import Entity
+  
     from map.game_map import GameMap, GameWorld
     from classes.actor import Actor
+    
 
 class Engine:
     game_map: GameMap
@@ -25,8 +27,9 @@ class Engine:
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
         # Camera view, cant be bigger than console.
-        self.camera_width = 80
+        self.camera_width = 60
         self.camera_height = 40
+        self.camera_x_offset = 30
         (self.x_left_ref,self.x_right_ref, self.y_left_ref, self.y_right_ref) = (0,0,self.camera_width,self.camera_height)
 
 
@@ -45,14 +48,15 @@ class Engine:
             console=console,
             current_value=self.player.fighter.hp,
             maximum_value=self.player.fighter.max_hp,
-            total_width=20,
+            total_width=20,x=0,y=45
         )
         rend.render_dungeon_level(
             console=console,
             dungeon_level=self.game_world.current_floor,
             location=(0, 47),
         )
-        rend.render_names_at_mouse_location(console=console, x=21, y=44, engine=self)
+        from interface.panels import RightPanel
+        RightPanel.render(console=console, engine=self)
         
 
     def update_fov(self) -> None:
@@ -73,10 +77,10 @@ class Engine:
             f.write(save_data)
 
     def map_to_camera_coordinates(self,map_x,map_y):
-        return (map_x - self.x_left_ref, map_y - self.y_left_ref)
+        return (map_x - self.x_left_ref + self.camera_x_offset, map_y - self.y_left_ref)
 
     def camera_to_map_coordinates(self,camera_x,camera_y):
-        return (camera_x + self.x_left_ref, camera_y + self.y_left_ref)
+        return (camera_x + self.x_left_ref - self.camera_x_offset, camera_y + self.y_left_ref)
 
     def update_camera_references(self):
 
