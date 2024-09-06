@@ -9,7 +9,7 @@ from interface.message_log import MessageLog
 from tcod.map import compute_fov
 import exceptions
 import tcod.constants as tconst
-
+import config
 import interface.render_functions as rend
 
 if TYPE_CHECKING:
@@ -27,9 +27,9 @@ class Engine:
         self.message_log = MessageLog()
         self.mouse_location = (0, 0)
         # Camera view, cant be bigger than console.
-        self.camera_width = 60
-        self.camera_height = 40
-        self.camera_x_offset = 30
+        self.camera_width = config.screen_width
+        self.camera_height = config.screen_height -10
+        self.camera_x_offset = 0
         (self.x_left_ref,self.x_right_ref, self.y_left_ref, self.y_right_ref) = (0,0,self.camera_width,self.camera_height)
 
 
@@ -42,8 +42,13 @@ class Engine:
                     pass # Ignore impossible action exceptions from AI.
 
     def render(self, console: Console) -> None:
+        
+        from interface.panels import RightPanel
+        RightPanel.check_entities_at_location(self )
+        self.update_camera_references()
         self.game_map.render(console)
         self.message_log.render(console=console,x=21,y=45, width=40, height=5)
+        console.hline(0,config.screen_height-9,width=config.screen_width)
         rend.render_bar(
             console=console,
             current_value=self.player.fighter.hp,
@@ -55,8 +60,8 @@ class Engine:
             dungeon_level=self.game_world.current_floor,
             location=(0, 47),
         )
-        from interface.panels import RightPanel
         RightPanel.render(console=console, engine=self)
+        
         
 
     def update_fov(self) -> None:

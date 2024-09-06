@@ -1,5 +1,6 @@
 import tcod
 
+import config
 import setup
 
 
@@ -37,7 +38,7 @@ def main():
         title="Rogue City project",
         vsync=True,
     ) as context:
-        root_console = tcod.console.Console(screen_width, screen_height, order="F")
+        root_console = tcod.console.Console(config.screen_width, config.screen_height, order="F")
         try:
             while True:
                 root_console.clear()

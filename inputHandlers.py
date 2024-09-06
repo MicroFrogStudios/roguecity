@@ -142,7 +142,7 @@ class EventHandler(BaseEventHandler):
             self.engine.mouse_location = x, y
 
     def on_render(self, console: tcod.console.Console) -> None:
-        self.engine.update_camera_references()
+        
         self.engine.render(console)
 
 
