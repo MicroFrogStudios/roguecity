@@ -6,6 +6,7 @@ import numpy as np  # type: ignore
 from tcod.console import Console
 from classes.actor import Actor
 from classes.item import Item
+import config
 import map.tile_types as tile_types
 
 if TYPE_CHECKING:
@@ -123,7 +124,6 @@ class GameMap:
         """Return True if x and y are inside of the bounds of this map."""
         return 0 <= x < self.width and 0 <= y < self.height
 
-    
 
     def render(self, console: Console) -> None:
         """

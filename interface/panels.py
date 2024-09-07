@@ -14,12 +14,12 @@ from interface.render_functions import render_bar, wrap
 from map.game_map import GameMap
 from engine import Engine
 
-class RightPanel:
+class ContextPanel:
     """
     Represent a side panel that shows information 
     about the world and interactions of the player
     """
-    entities: list[Entity] = None
+
     x_offset = 90
     left_margin = 3
     
@@ -34,10 +34,14 @@ class RightPanel:
         console: Console, engine: Engine
     ) -> None:
         
+        entities = engine.check_visible_entities_on_mouse()
         #for now just use the first
-        if cls.entities:
-            
-            top_entity : Entity = cls.entities[0]
+        if entities:
+
+            top_entity : Entity = entities[0]
+            cls.x_offset = 90
+            if top_entity.x >= config.screen_width//2:
+                cls.x_offset = 0
             desc_wrap_list = list(wrap(top_entity.description, 20))
             frame_height = min(50,20+len(desc_wrap_list)+2)
             console.draw_frame(x=cls.x_offset, y=0, width=30, height=frame_height,title=top_entity.name,clear=True,fg=color.white,bg=color.black )
@@ -52,21 +56,4 @@ class RightPanel:
                 console.print(x=cls.x_offset+3, y=y + y_offset, string=line, fg=color.menu_text)
                 y_offset += 1
 
-          
-            
-    
-    @classmethod
-    def check_entities_at_location(cls,engine: Engine) -> None:
-        x,y = engine.mouse_location
-        
-        if not engine.game_map.in_bounds(x, y) or not engine.game_map.visible[x, y]:
-            cls.entities =  []
-            return
-        cls.x_offset = 90
-        if x >= config.screen_width//2:
-            cls.x_offset = 0
-        cls.entities =  [
-            entity for entity in engine.game_map.entities if entity.x == x and entity.y == y
-        ]
-        
         

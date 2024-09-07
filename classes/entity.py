@@ -4,8 +4,10 @@ import copy
 import math
 from typing import Optional, Tuple, TypeVar, TYPE_CHECKING, Union
 
+
 from components.inventory_component import Inventory
 from enums.render_order import RenderOrder
+from components.interactable_component import Interactable
 
 if TYPE_CHECKING:
     from map.game_map import GameMap
@@ -47,9 +49,16 @@ class Entity:
             self.parent = parent
             parent.entities.add(self)
 
+        self.interactables : set[Interactable] = set()
+
+
     @property
     def gamemap(self) -> GameMap:
         return self.parent.gamemap
+    
+    
+    def addInteractable(self,interactable):
+        self.interactables.add(interactable)
 
     def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
         """Spawn a copy of this instance at the given location."""
@@ -80,3 +89,5 @@ class Entity:
         # Move the entity by a given amount
         self.x += dx
         self.y += dy
+
+    

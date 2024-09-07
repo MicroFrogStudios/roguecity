@@ -14,12 +14,33 @@ if TYPE_CHECKING:
     from classes.actor import Actor
     from classes.item import Item
 
-from inputHandlers import (
+from handlers.input_handlers import (
     ActionOrHandler,
     AreaRangedAttackHandler,
     SingleRangedAttackHandler,
 )
-class Consumable(BaseComponent):
+
+
+class Interactable(BaseComponent):
+
+
+    # def __init__(self, name, tooltip) -> None:
+    #     super().__init__()
+    #     self.name = name
+    #     self.tooltip = tooltip
+
+
+    def get_action(self) -> Optional[ActionOrHandler]:
+        """Try to return the action for this item."""
+        return actions.Action(self.parent)
+
+    def check_activable(self) -> bool:
+        """
+        Check if this interaction is allowed to activate this turn
+        """
+        raise NotImplementedError()
+    
+class Consumable(Interactable):
     parent: Item
 
     def get_action(self, consumer: Actor) -> Optional[ActionOrHandler]:
@@ -152,3 +173,8 @@ class FireballDamageConsumable(Consumable):
         if not targets_hit:
             raise Impossible("There are no targets in the radius.")
         self.consume()
+
+
+class PickUpable(Interactable):
+    name = "Pick Up"
+    tooltip = "If near, grab this and put it in your inventory"

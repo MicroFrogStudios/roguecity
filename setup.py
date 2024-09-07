@@ -12,7 +12,7 @@ from tcod import libtcodpy
 import enums.color as color
 from engine import Engine
 import factories.entity_factories as entity_factories
-import inputHandlers as input_handlers
+import handlers.input_handlers as input_handlers
 
 from map.game_map import GameWorld
 

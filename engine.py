@@ -4,6 +4,7 @@ import lzma
 import pickle
 from typing import TYPE_CHECKING
 from tcod.console import Console
+from enums import color
 from interface.message_log import MessageLog
 
 from tcod.map import compute_fov
@@ -43,12 +44,11 @@ class Engine:
 
     def render(self, console: Console) -> None:
         
-        from interface.panels import RightPanel
-        RightPanel.check_entities_at_location(self )
+        
         self.update_camera_references()
         self.game_map.render(console)
         self.message_log.render(console=console,x=21,y=45, width=40, height=5)
-        console.hline(0,config.screen_height-9,width=config.screen_width)
+        console.draw_rect(x=0,y=config.screen_height-9,width=config.screen_width,height=1,fg=color.white,ch=ord("_"))
         rend.render_bar(
             console=console,
             current_value=self.player.fighter.hp,
@@ -60,9 +60,17 @@ class Engine:
             dungeon_level=self.game_world.current_floor,
             location=(0, 47),
         )
-        RightPanel.render(console=console, engine=self)
         
         
+    def check_visible_entities_on_mouse(self):
+        x,y = self.mouse_location
+        
+        if not self.game_map.in_bounds(x, y) or not self.game_map.visible[x, y]:
+            return  []
+            
+        return  [
+            entity for entity in self.game_map.entities if entity.x == x and entity.y == y
+        ]  
 
     def update_fov(self) -> None:
         """Recompute the visible area based on the players point of view."""

@@ -1,6 +1,6 @@
 from typing import Tuple
 from classes.entity import Entity
-from components.consumable_component import Consumable
+from components.interactable_component import Consumable
 from enums.render_order import RenderOrder
 
 

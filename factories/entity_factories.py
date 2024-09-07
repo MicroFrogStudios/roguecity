@@ -3,7 +3,7 @@ from classes.actor import Actor
 from classes.item import Item
 from components.ai import HostileEnemy
 from components.fighter_component import Fighter, Level
-import components.consumable_component as consumable
+import components.interactable_component as consumable
 from components.inventory_component import Inventory
 
 player = Actor(

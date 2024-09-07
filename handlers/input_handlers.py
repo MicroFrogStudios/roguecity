@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import os
-from typing import Callable, Optional, Tuple, TYPE_CHECKING, Union
+from typing import Callable, Optional, TYPE_CHECKING, Tuple, Union
 
+from tcod.console import Console
 import tcod.event
 import tcod.libtcodpy
 
@@ -13,6 +14,7 @@ from actions import (
     WaitAction,
     PickupAction
 )
+
 import enums.color as color
 import exceptions
 
@@ -20,13 +22,18 @@ import exceptions
 if TYPE_CHECKING:
     from engine import Engine
     from classes.item import Item
-
+    
 MOVE_KEYS = {
     # Arrow keys.
     tcod.event.KeySym.UP: (0, -1),
     tcod.event.KeySym.DOWN: (0, 1),
     tcod.event.KeySym.LEFT: (-1, 0),
     tcod.event.KeySym.RIGHT: (1, 0),
+    #WASD Keys
+    tcod.event.KeySym.w: (0, -1),
+    tcod.event.KeySym.s: (0, 1),
+    tcod.event.KeySym.a: (-1, 0),
+    tcod.event.KeySym.d: (1, 0),
     # Numpad keys.
     tcod.event.KeySym.KP_1: (-1, 1),
     tcod.event.KeySym.KP_2: (0, 1),
@@ -46,7 +53,7 @@ WAIT_KEYS = {
 
 CONFIRM_KEYS = {
     tcod.event.KeySym.RETURN,
-    tcod.event.KeySym.KP_ENTER
+    tcod.event.KeySym.KP_ENTER,
 }
 
 ActionOrHandler = Union[Action, "BaseEventHandler"]
@@ -168,26 +175,46 @@ class MainGameEventHandler(EventHandler):
         elif key in WAIT_KEYS:
             action = WaitAction(player)
 
-        elif key == tcod.event.KeySym.g:
+        elif key == tcod.event.KeySym.g:# to interactable
             action = PickupAction(player)
 
-        elif key == tcod.event.KeySym.i:
+        elif key == tcod.event.KeySym.i: # hot key to big menu
             return InventoryActivateHandler(self.engine)
 
-        elif key == tcod.event.KeySym.d:
+        elif key == tcod.event.KeySym.r: #refactored to big menu
             return InventoryDropHandler(self.engine)
-        elif key == tcod.event.KeySym.l:
+        
+        elif key == tcod.event.KeySym.l: # maybe keep for accesibility
             return LookHandler(self.engine)
-        elif key == tcod.event.KeySym.ESCAPE:
+        elif key == tcod.event.KeySym.ESCAPE: # big menu instead of instquit
             raise SystemExit()
-        elif key == tcod.event.KeySym.c:
+        elif key == tcod.event.KeySym.c:# hot key to big menu
             return CharacterScreenEventHandler(self.engine)
-        elif key == tcod.event.KeySym.v:
+        elif key == tcod.event.KeySym.v:# hot key to big menu
             return HistoryViewer(self.engine)
 
         # No valid key was pressed
         return action
     
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
+        """By default any mouse click exits this input handler."""
+
+        """Left click confirms a selection."""
+        entities = self.engine.check_visible_entities_on_mouse()
+        if entities and event.button == 1:
+            self.engine.entities = entities
+            return SelectedEntityHandler(self.engine)
+        
+        return super().ev_mousebuttondown(event)
+    
+    def on_render(self, console: Console) -> None:
+
+        super().on_render(console)
+        from interface.panels import ContextPanel
+        ContextPanel.render(console=console, engine=self.engine)
+         
+
+
 class GameOverEventHandler(EventHandler):
 
     def on_quit(self) -> None:
@@ -290,13 +317,17 @@ class AskUserEventHandler(EventHandler):
         By default this returns to the main event handler.
         """
         return MainGameEventHandler(self.engine)
-    
+
+class SelectedEntityHandler(AskUserEventHandler):
+    def __init__():
+        return #TODO
+
 class InventoryEventHandler(AskUserEventHandler):
     """This handler lets the user select an item.
 
     What happens then depends on the subclass.
     """
-
+    
     TITLE = "<missing title>"
 
     def on_render(self, console: tcod.console.Console) -> None:
@@ -356,7 +387,8 @@ class InventoryEventHandler(AskUserEventHandler):
     def on_item_selected(self, item: Item) -> Optional[ActionOrHandler]:
         """Called when the user selects a valid item."""
         raise NotImplementedError()
-    
+
+
 class InventoryActivateHandler(InventoryEventHandler):
     """Handle using an inventory item."""
 
@@ -380,16 +412,17 @@ class InventoryDropHandler(InventoryEventHandler):
 class SelectIndexHandler(AskUserEventHandler):
     """Handles asking the user for an index on the map."""
 
-    def __init__(self, engine: Engine):
+    def __init__(self, engine: Engine, range : int = 99):
         """Sets the cursor to the player when this handler is constructed."""
         super().__init__(engine)
         player = self.engine.player
         engine.mouse_location = player.x, player.y
+        self.range = range
 
     def on_render(self, console: tcod.console.Console) -> None:
         """Highlight the tile under the cursor."""
         super().on_render(console)
-        x, y = self.engine.mouse_location 
+        x, y = self.engine.mouse_location
         x, y = self.engine.map_to_camera_coordinates(x,y)
 
         console.rgb["bg"][x, y] = color.white
@@ -411,9 +444,11 @@ class SelectIndexHandler(AskUserEventHandler):
             dx, dy = MOVE_KEYS[key]
             x += dx * modifier
             y += dy * modifier
+            px = self.engine.player.x
+            py = self.engine.player.y
             # Clamp the cursor index to the map size.
-            x = max(self.engine.x_left_ref, min(x, self.engine.x_right_ref - 1))
-            y = max(self.engine.y_left_ref, min(y, self.engine.y_right_ref - 1))
+            x = max(self.engine.x_left_ref, min(x, self.engine.x_right_ref - 1,px+self.range),px-self.range)
+            y = max(self.engine.y_left_ref, min(y, self.engine.y_right_ref - 1,py+self.range),py-self.range)
             self.engine.mouse_location = x, y
             return None
         elif key in CONFIRM_KEYS:
@@ -438,6 +473,12 @@ class LookHandler(SelectIndexHandler):
     def on_index_selected(self, x: int, y: int) -> MainGameEventHandler:
         """Return to main handler."""
         return MainGameEventHandler(self.engine)
+    
+    def on_render(self, console: Console) -> None:
+        super().on_render(console)
+        from interface.panels import ContextPanel
+        ContextPanel.render(console=console, engine=self.engine)
+
 
 class SingleRangedAttackHandler(SelectIndexHandler):
     """Handles targeting a single enemy. Only the enemy selected will be affected."""
@@ -451,7 +492,8 @@ class SingleRangedAttackHandler(SelectIndexHandler):
 
     def on_index_selected(self, x: int, y: int) -> Optional[ActionOrHandler]:
         return self.callback((x, y))
-    
+
+
 class AreaRangedAttackHandler(SelectIndexHandler):
     """Handles targeting an area within a given radius. Any entity within the area will be affected."""
 
@@ -485,7 +527,7 @@ class AreaRangedAttackHandler(SelectIndexHandler):
     def on_index_selected(self, x: int, y: int) -> Optional[ActionOrHandler]:
         return self.callback((x, y))
     
-
+    
 class LevelUpEventHandler(AskUserEventHandler):
     TITLE = "Level Up"
 
