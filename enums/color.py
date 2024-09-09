@@ -23,7 +23,10 @@ bar_empty = (0x40, 0x10, 0x10)
 menu_title = (255, 255, 63)
 menu_text = white
 
-button_hover = (150,0,150)
+menu_selected = (0, 102, 255)
+
+button_color = (255, 255, 102)
+button_hover = (204, 255, 255)
 
 
 invalid = (0xFF, 0xFF, 0x00)

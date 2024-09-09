@@ -33,6 +33,7 @@ class Entity:
         blocks_movement: bool = False,
         render_order: RenderOrder = RenderOrder.CORPSE,
         icon: str = "assets\sprites\\red_egg.png",
+        interactables : set[Interactable] = None
     ):
         self.x = x
         self.y = y
@@ -49,7 +50,10 @@ class Entity:
             self.parent = parent
             parent.entities.add(self)
 
-        self.interactables : set[Interactable] = set()
+        self.interactables = interactables
+        if self.interactables is not None:
+            for inter in self.interactables:
+                inter.parent = self
 
 
     @property

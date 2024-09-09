@@ -3,7 +3,7 @@ from classes.actor import Actor
 from classes.item import Item
 from components.ai import HostileEnemy
 from components.fighter_component import Fighter, Level
-import components.interactable_component as consumable
+import components.interactable_component as interactables
 from components.inventory_component import Inventory
 
 player = Actor(
@@ -38,32 +38,35 @@ troll = Actor(
     level=Level(xp_given=100),
 )
 
-health_potion = Item(
+food = Item(
     char="%",
-    color=(127, 0, 255),
+    color=(153, 0, 0),
     name="food",
-    consumable=consumable.HealingConsumable(amount=4),
+    consumable=interactables.HealingConsumable(amount=4),
+    icon="assets/sprites/meat.png",
+    interactables=[interactables.Interactable()]
+
 )
 
 lightning_scroll = Item(
     char="~",
     color=(255, 255, 0),
     name="Lightning Scroll",
-    consumable=consumable.LightningDamageConsumable(damage=20, maximum_range=5),
+    consumable=interactables.LightningDamageConsumable(damage=20, maximum_range=5),
 )
 
 confusion_scroll = Item(
     char="~",
     color=(207, 63, 255),
     name="Confusion Scroll",
-    consumable=consumable.ConfusionConsumable(number_of_turns=10),
+    consumable=interactables.ConfusionConsumable(number_of_turns=10),
 )
 
 fireball_scroll = Item(
     char="~",
     color=(255, 0, 0),
     name="Fireball Scroll",
-    consumable=consumable.FireballDamageConsumable(damage=12, radius=3),
+    consumable=interactables.FireballDamageConsumable(damage=12, radius=3),
 )
 
 mystery_egg = Item(

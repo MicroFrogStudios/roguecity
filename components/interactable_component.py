@@ -40,6 +40,30 @@ class Interactable(BaseComponent):
         """
         raise NotImplementedError()
     
+    def activate(self, action: actions.InteractiveAction) -> None:
+        """Invoke this items ability.
+
+        `action` is the context for this activation.
+        """
+        raise NotImplementedError()
+
+class EatInteraction(Interactable):
+
+    def activate(self, action: actions.InteractiveAction) -> None:
+        consumer = action.entity
+        if not isinstance(consumer, Actor):
+            raise Impossible(f"{consumer.name} cannot perform eat")
+        amount_recovered = consumer.fighter.heal(self.parent.amount)
+
+        if amount_recovered > 0:
+            self.engine.message_log.add_message(
+                f"You consume the {self.parent.name}, and recover {amount_recovered} HP!",
+                color.health_recovered,
+            )
+            self.consume()
+        else:
+            raise Impossible(f"Your health is already full.")
+
 class Consumable(Interactable):
     parent: Item
 

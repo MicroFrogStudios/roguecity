@@ -15,7 +15,8 @@ class Item(Entity):
         name: str = "<Unnamed>",
         description: str = "<Missing Description>",
         consumable: Consumable = None,
-        icon : str = "assets\sprites\\red_egg.png"
+        icon : str = "assets\sprites\\red_egg.png",
+        interactables = None
     ):
         super().__init__(
             x=x,
@@ -26,7 +27,9 @@ class Item(Entity):
             description=description,
             blocks_movement=False,
             render_order=RenderOrder.ITEM,
-            icon = icon
+            icon = icon,
+            interactables = interactables
+            
         )
         if consumable is not None:
             self.consumable = consumable

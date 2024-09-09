@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Optional, Tuple, TYPE_CHECKING
+
 import enums.color as color
 import exceptions
 if TYPE_CHECKING:
@@ -8,6 +9,7 @@ if TYPE_CHECKING:
     from classes.entity import Entity
     from classes.actor import Actor
     from classes.item import Item
+    from components.interactable_component import Interactable
 
 class Action:
     def __init__(self, entity: Actor) -> None:
@@ -105,6 +107,21 @@ class BumpAction(ActionWithDirection):
 class WaitAction(Action):
     def perform(self) -> None:
         pass
+
+
+class InteractiveAction(Action):
+    
+    def __init__(
+        self, entity: Entity, interactable : Interactable, target_xy: Optional[Tuple[int, int]] = None
+    ):
+        super().__init__(entity)
+        self.interactable = interactable
+        if not target_xy:
+            target_xy = entity.x, entity.y
+        self.target_xy = target_xy
+    def perform(self) -> None:
+        """Invoke the items ability, this action will be given to provide context."""
+        self.interactable.activate(self)
 
 class ItemAction(Action):
     def __init__(

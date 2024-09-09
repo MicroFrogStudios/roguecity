@@ -322,6 +322,8 @@ class SelectedEntityHandler(AskUserEventHandler):
     
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
         """By default any mouse click exits this input handler."""
+        event.tile
+        
         self.engine.entities = None
         return self.on_exit()
     

@@ -58,8 +58,8 @@ def new_game() -> Engine:
     return engine
 
 def test_game() -> Engine:
-    map_width = 100
-    map_height = 100
+    map_width = 150
+    map_height = 150
     player = copy.deepcopy(entity_factories.player)
     engine = Engine(player=player)
 

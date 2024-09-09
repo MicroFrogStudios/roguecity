@@ -28,7 +28,7 @@ class ContextPanel:
     def render(cls, console: Console, engine: Engine) -> None:
         if engine.entities:
             entities = engine.entities
-            cls.fg = color.invalid
+            cls.fg = color.menu_selected
         else:
             entities = engine.check_visible_entities_on_mouse()
             cls.fg = color.white
@@ -59,16 +59,15 @@ class ContextPanel:
                 console.print(x=cls.x_offset+3, y=y + y_offset, string=line, fg=color.menu_text)
                 y_offset += 1
                 
-            col_count = 0
-            row_count = 0
+           
             row_one_button_slots = [(cls.x_offset+3+i*8,y+y_offset+1) for i in range(0,3)]
             row_two_button_slots = [(cls.x_offset+3+i*8,y+y_offset+5) for i in range(0,3)]
             
             for xb,yb in row_one_button_slots:    
-                Button(xb,yb,7,3,"tests").render(console,engine)
+                Button(xb,yb,"EAT").render(console,engine)
                 
             for xb,yb in row_two_button_slots:    
-                Button(xb,yb,7,3,"tests").render(console,engine)
-                
+                Button(xb,yb,"EXTRACT").render(console,engine)
 
-        
+
+                
