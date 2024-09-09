@@ -319,8 +319,33 @@ class AskUserEventHandler(EventHandler):
         return MainGameEventHandler(self.engine)
 
 class SelectedEntityHandler(AskUserEventHandler):
-    def __init__():
-        return #TODO
+    
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
+        """By default any mouse click exits this input handler."""
+        self.engine.entities = None
+        return self.on_exit()
+    
+    def on_render(self, console: Console) -> None:
+
+        super().on_render(console)
+        from interface.panels import ContextPanel
+        ContextPanel.render(console=console, engine=self.engine)
+         
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        """By default any key exits this input handler."""
+        if event.sym in {  # Ignore modifier keys.
+            tcod.event.KeySym.LSHIFT,
+            tcod.event.KeySym.RSHIFT,
+            tcod.event.KeySym.LCTRL,
+            tcod.event.KeySym.RCTRL,
+            tcod.event.KeySym.LALT,
+            tcod.event.KeySym.RALT,
+        }:
+            return None
+        
+        
+        self.engine.entities = None
+        return self.on_exit()
 
 class InventoryEventHandler(AskUserEventHandler):
     """This handler lets the user select an item.

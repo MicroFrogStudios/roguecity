@@ -4,6 +4,7 @@ import lzma
 import pickle
 from typing import TYPE_CHECKING
 from tcod.console import Console
+from classes.entity import Entity
 from enums import color
 from interface.message_log import MessageLog
 
@@ -22,6 +23,7 @@ if TYPE_CHECKING:
 class Engine:
     game_map: GameMap
     game_world: GameWorld
+    
 
     def __init__(self, player: Actor):
         self.player = player
@@ -32,7 +34,7 @@ class Engine:
         self.camera_height = config.screen_height -10
         self.camera_x_offset = 0
         (self.x_left_ref,self.x_right_ref, self.y_left_ref, self.y_right_ref) = (0,0,self.camera_width,self.camera_height)
-
+        self.entities: set[Entity] = None
 
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
