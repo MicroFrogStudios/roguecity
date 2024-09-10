@@ -27,7 +27,7 @@ menu_selected = (0, 102, 255)
 
 button_color = (255, 255, 102)
 button_hover = (204, 255, 255)
-
+button_grey = (89, 89, 89)
 
 invalid = (0xFF, 0xFF, 0x00)
 impossible = (0x80, 0x80, 0x80)

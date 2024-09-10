@@ -17,7 +17,7 @@ from actions import (
 
 import enums.color as color
 import exceptions
-
+from interface.panels import ContextPanel
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -201,6 +201,7 @@ class MainGameEventHandler(EventHandler):
 
         """Left click confirms a selection."""
         entities = self.engine.check_visible_entities_on_mouse()
+        
         if entities and event.button == 1:
             self.engine.entities = entities
             return SelectedEntityHandler(self.engine)
@@ -210,7 +211,7 @@ class MainGameEventHandler(EventHandler):
     def on_render(self, console: Console) -> None:
 
         super().on_render(console)
-        from interface.panels import ContextPanel
+        
         ContextPanel.render(console=console, engine=self.engine)
          
 
@@ -322,15 +323,18 @@ class SelectedEntityHandler(AskUserEventHandler):
     
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
         """By default any mouse click exits this input handler."""
-        event.tile
         
+        for b in ContextPanel.buttons:
+            if b.hovering(self.engine) and b.on_click is not None:
+                return b.on_click(self.engine.player)
+                
         self.engine.entities = None
         return self.on_exit()
     
     def on_render(self, console: Console) -> None:
 
         super().on_render(console)
-        from interface.panels import ContextPanel
+        
         ContextPanel.render(console=console, engine=self.engine)
          
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
@@ -503,7 +507,7 @@ class LookHandler(SelectIndexHandler):
     
     def on_render(self, console: Console) -> None:
         super().on_render(console)
-        from interface.panels import ContextPanel
+        
         ContextPanel.render(console=console, engine=self.engine)
 
 

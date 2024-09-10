@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Optional, Tuple, TYPE_CHECKING
 
+from components.interactor_component import Interactor
 import enums.color as color
 import exceptions
 if TYPE_CHECKING:
@@ -112,13 +113,15 @@ class WaitAction(Action):
 class InteractiveAction(Action):
     
     def __init__(
-        self, entity: Entity, interactable : Interactable, target_xy: Optional[Tuple[int, int]] = None
+        self, interactor: Interactor, interactable : Interactable, target: Optional[Entity] = None
     ):
-        super().__init__(entity)
+        super().__init__(interactor.parent)
         self.interactable = interactable
-        if not target_xy:
-            target_xy = entity.x, entity.y
-        self.target_xy = target_xy
+        if  target is None:
+            self.target = interactor.parent
+        else:
+            self.target = target
+            
     def perform(self) -> None:
         """Invoke the items ability, this action will be given to provide context."""
         self.interactable.activate(self)

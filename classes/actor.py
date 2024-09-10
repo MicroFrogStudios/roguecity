@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.fighter_component import Fighter, Level
     from components.inventory_component import Inventory
+    from components.interactor_component import Interactor
+
 
 class Actor(Entity):
     def __init__(
@@ -23,8 +25,10 @@ class Actor(Entity):
         ai_cls: Type[BaseAI],
         fighter: Fighter,
         inventory: Inventory,
+        interactor: Interactor,
         level: Level,
         icon: str = "assets\sprites\\red_egg.png",
+        interactables = None
 
     ):
         super().__init__(
@@ -36,7 +40,8 @@ class Actor(Entity):
             description=description,
             blocks_movement=True,
             render_order=RenderOrder.ACTOR,
-            icon=icon
+            icon=icon,
+            interactables=interactables
         )
 
         self.ai: Optional[BaseAI] = ai_cls(self)
@@ -47,6 +52,10 @@ class Actor(Entity):
         self.inventory = inventory
         self.inventory.parent = self
 
+
+        self.interactor = interactor
+        self.interactor.parent = self
+        
         self.level = level
         self.level.parent = self
 

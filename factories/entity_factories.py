@@ -4,6 +4,7 @@ from classes.item import Item
 from components.ai import HostileEnemy
 from components.fighter_component import Fighter, Level
 import components.interactable_component as interactables
+from components.interactor_component import Interactor
 from components.inventory_component import Inventory
 
 player = Actor(
@@ -13,6 +14,7 @@ player = Actor(
     description= "This is you",
     ai_cls=HostileEnemy,
     fighter=Fighter(hp=30, defense=2, power=5),
+    interactor=Interactor(),
     inventory=Inventory(capacity=26),
     level=Level(level_up_base=200),
     icon= "assets\sprites\magito_azul.png"
@@ -26,7 +28,9 @@ orc = Actor(
     ai_cls=HostileEnemy,
     fighter=Fighter(hp=10, defense=0, power=3),
     inventory=Inventory(capacity=0),
+    interactor=Interactor(),
     level=Level(xp_given=35),
+    interactables=[interactables.TauntInteraction()],
 )
 troll = Actor(
     char="T",
@@ -35,7 +39,9 @@ troll = Actor(
     ai_cls=HostileEnemy,
     fighter=Fighter(hp=16, defense=1, power=4),
     inventory=Inventory(capacity=0),
+    interactor=Interactor(),
     level=Level(xp_given=100),
+    interactables=[interactables.TauntInteraction()],
 )
 
 food = Item(
@@ -44,7 +50,7 @@ food = Item(
     name="food",
     consumable=interactables.HealingConsumable(amount=4),
     icon="assets/sprites/meat.png",
-    interactables=[interactables.Interactable()]
+    interactables=[interactables.EatInteraction()]
 
 )
 

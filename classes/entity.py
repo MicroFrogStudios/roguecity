@@ -60,7 +60,14 @@ class Entity:
     def gamemap(self) -> GameMap:
         return self.parent.gamemap
     
-    
+    @property
+    def interactables(self) -> set[Interactable]:
+        return self._interactables
+
+    @interactables.setter
+    def interactables(self, interactables:set[Interactable]):
+        self._interactables = interactables
+        
     def addInteractable(self,interactable):
         self.interactables.add(interactable)
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 
 import actions
+from components.interactor_component import Interactor
 import enums.color as color
 from components import ai
 from components.inventory_component import Inventory
@@ -10,8 +11,8 @@ from components.base_component import BaseComponent
 from exceptions import Impossible
 
 
+
 if TYPE_CHECKING:
-    from classes.actor import Actor
     from classes.item import Item
 
 from handlers.input_handlers import (
@@ -29,12 +30,15 @@ class Interactable(BaseComponent):
     #     self.name = name
     #     self.tooltip = tooltip
 
-
-    def get_action(self) -> Optional[ActionOrHandler]:
+    # def __init__(self,name:str, tooltip:str = "") -> None:
+    #     self.name=name
+    #     self.tooltip=tooltip
+    name = "<NULL>"
+    def get_action(self, activator: Interactor) -> Optional[ActionOrHandler]:
         """Try to return the action for this item."""
-        return actions.Action(self.parent)
+        return actions.InteractiveAction(activator,self)
 
-    def check_activable(self) -> bool:
+    def check_player_activable(self) -> bool:
         """
         Check if this interaction is allowed to activate this turn
         """
@@ -47,13 +51,39 @@ class Interactable(BaseComponent):
         """
         raise NotImplementedError()
 
-class EatInteraction(Interactable):
 
+class TauntInteraction(Interactable):
+    
+    name = "TAUNT"
+    
+    def get_action(self, activator: Interactor) -> Optional[ActionOrHandler]:
+        """Try to return the action for this item."""
+        return actions.InteractiveAction(activator,self,self.parent)
+    
+    def activate(self, action: actions.InteractiveAction) -> None:
+        
+        if action.entity is action.engine.player:
+            
+            self.engine.message_log.add_message(
+                f"you taunt the {action.target.name}",
+                color.enemy_atk)
+        else:
+             self.engine.message_log.add_message(
+                f"The {action.entity.name} taunts the {action.target.name}",
+                color.enemy_atk)
+        
+    def check_player_activable(self) -> bool:
+        return self.engine.player.distance(self.parent.x,self.parent.y) < 5
+    
+class EatInteraction(Interactable):
+    parent: Item
+    name = "EAT"
+    
     def activate(self, action: actions.InteractiveAction) -> None:
         consumer = action.entity
-        if not isinstance(consumer, Actor):
+        if not hasattr(consumer, "interactor"):
             raise Impossible(f"{consumer.name} cannot perform eat")
-        amount_recovered = consumer.fighter.heal(self.parent.amount)
+        amount_recovered = consumer.fighter.heal(self.parent.consumable.amount)
 
         if amount_recovered > 0:
             self.engine.message_log.add_message(
@@ -63,6 +93,16 @@ class EatInteraction(Interactable):
             self.consume()
         else:
             raise Impossible(f"Your health is already full.")
+        
+    def check_player_activable(self) -> bool:
+        return self.engine.player.distance(self.parent.x,self.parent.y) < 3
+    
+    def consume(self) -> None:
+        """Remove the consumed item from its containing inventory."""
+        entity = self.parent
+        inventory = entity.parent
+        if isinstance(inventory, Inventory):
+            inventory.items.remove(entity)
 
 class Consumable(Interactable):
     parent: Item
