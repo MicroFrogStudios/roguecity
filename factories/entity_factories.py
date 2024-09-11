@@ -50,7 +50,7 @@ food = Item(
     name="food",
     consumable=interactables.HealingConsumable(amount=4),
     icon="assets/sprites/meat.png",
-    interactables=[interactables.EatInteraction()]
+    interactables=[interactables.EatInteraction(4), interactables.PickUpInteractable()]
 
 )
 

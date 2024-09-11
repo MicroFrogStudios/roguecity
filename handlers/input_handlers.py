@@ -326,7 +326,8 @@ class SelectedEntityHandler(AskUserEventHandler):
         
         for b in ContextPanel.buttons:
             if b.hovering(self.engine) and b.on_click is not None:
-                return b.on_click(self.engine.player)
+                self.engine.entities = None
+                return b.on_click(self.engine.player.interactor)
                 
         self.engine.entities = None
         return self.on_exit()

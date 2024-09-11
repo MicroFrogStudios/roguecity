@@ -1,6 +1,6 @@
 from typing import Tuple
 from classes.entity import Entity
-from components.interactable_component import Consumable, Interactable
+from components.interactable_component import ConsumeInteractable, Interactable
 from enums.render_order import RenderOrder
 
 
@@ -14,7 +14,7 @@ class Item(Entity):
         color: Tuple[int, int, int] = (255, 255, 255),
         name: str = "<Unnamed>",
         description: str = "<Missing Description>",
-        consumable: Consumable = None,
+        consumable: ConsumeInteractable = None,
         icon : str = "assets\sprites\\red_egg.png",
         interactables = None
     ):

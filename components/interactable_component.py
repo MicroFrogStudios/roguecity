@@ -15,6 +15,7 @@ from exceptions import Impossible
 if TYPE_CHECKING:
     from classes.item import Item
 
+import exceptions
 from handlers.input_handlers import (
     ActionOrHandler,
     AreaRangedAttackHandler,
@@ -74,16 +75,34 @@ class TauntInteraction(Interactable):
         
     def check_player_activable(self) -> bool:
         return self.engine.player.distance(self.parent.x,self.parent.y) < 5
+
+class ConsumeInteractable(Interactable):
+    parent: Item
+
+    # def get_action(self, consumer: Interactor) -> Optional[ActionOrHandler]:
+    #     """Try to return the action for this item."""
+    #     return actions.ItemAction(consumer, self.parent)
     
-class EatInteraction(Interactable):
+    def consume(self) -> None:
+        """Remove the consumed item from its containing inventory or map."""
+        entity = self.parent
+        inventory = entity.parent
+        if isinstance(inventory, Inventory):
+            inventory.items.remove(entity)
+        else:
+            #This is in current map
+            self.engine.game_map.entities.remove(entity)
+
+class EatInteraction(ConsumeInteractable):
     parent: Item
     name = "EAT"
-    
+    def __init__(self, amount: int):
+        self.amount = amount
     def activate(self, action: actions.InteractiveAction) -> None:
         consumer = action.entity
         if not hasattr(consumer, "interactor"):
             raise Impossible(f"{consumer.name} cannot perform eat")
-        amount_recovered = consumer.fighter.heal(self.parent.consumable.amount)
+        amount_recovered = consumer.fighter.heal(self.amount)
 
         if amount_recovered > 0:
             self.engine.message_log.add_message(
@@ -95,38 +114,30 @@ class EatInteraction(Interactable):
             raise Impossible(f"Your health is already full.")
         
     def check_player_activable(self) -> bool:
-        return self.engine.player.distance(self.parent.x,self.parent.y) < 3
-    
-    def consume(self) -> None:
-        """Remove the consumed item from its containing inventory."""
-        entity = self.parent
-        inventory = entity.parent
-        if isinstance(inventory, Inventory):
-            inventory.items.remove(entity)
+        return self.engine.player.distance(self.parent.x,self.parent.y) < 2
 
-class Consumable(Interactable):
+
+class PickUpInteractable(Interactable):
     parent: Item
+    name = "PICK UP"
 
-    def get_action(self, consumer: Actor) -> Optional[ActionOrHandler]:
-        """Try to return the action for this item."""
-        return actions.ItemAction(consumer, self.parent)
-
-    def activate(self, action: actions.ItemAction) -> None:
-        """Invoke this items ability.
-
-        `action` is the context for this activation.
-        """
-        raise NotImplementedError()
+    def check_player_activable(self) -> bool:
+        return self.engine.player.distance(self.parent.x,self.parent.y) < 2
     
-    def consume(self) -> None:
-        """Remove the consumed item from its containing inventory."""
-        entity = self.parent
-        inventory = entity.parent
-        if isinstance(inventory, Inventory):
-            inventory.items.remove(entity)
+    def activate(self, action: actions.InteractiveAction) -> None:
+        inventory = action.entity.inventory
+        if len(inventory.items) >= inventory.capacity:
+                    raise exceptions.Impossible("Your inventory is full.")
+        self.engine.game_map.entities.remove(self.parent)
+        self.parent.parent = action.entity.inventory
+        inventory.items.append(self.parent)
+        self.engine.message_log.add_message(f"You picked up the {self.parent.name}!")
 
 
-class HealingConsumable(Consumable):
+
+
+
+class HealingConsumable(ConsumeInteractable):
     def __init__(self, amount: int):
         self.amount = amount
 
@@ -143,7 +154,7 @@ class HealingConsumable(Consumable):
         else:
             raise Impossible(f"Your health is already full.")
         
-class LightningDamageConsumable(Consumable):
+class LightningDamageConsumable(ConsumeInteractable):
     def __init__(self, damage: int, maximum_range: int):
         self.damage = damage
         self.maximum_range = maximum_range
@@ -170,7 +181,7 @@ class LightningDamageConsumable(Consumable):
         else:
             raise Impossible("No enemy is close enough to strike.")
         
-class ConfusionConsumable(Consumable):
+class ConfusionConsumable(ConsumeInteractable):
     def __init__(self, number_of_turns: int):
         self.number_of_turns = number_of_turns
 
@@ -204,7 +215,7 @@ class ConfusionConsumable(Consumable):
         )
         self.consume()
 
-class FireballDamageConsumable(Consumable):
+class FireballDamageConsumable(ConsumeInteractable):
     def __init__(self, damage: int, radius: int):
         self.damage = damage
         self.radius = radius
@@ -239,6 +250,3 @@ class FireballDamageConsumable(Consumable):
         self.consume()
 
 
-class PickUpable(Interactable):
-    name = "Pick Up"
-    tooltip = "If near, grab this and put it in your inventory"
