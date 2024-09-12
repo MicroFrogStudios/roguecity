@@ -11,7 +11,7 @@ import tcod
 from tcod import libtcodpy
 import enums.color as color
 from engine import Engine
-import factories.entity_factories as entity_factories
+import factories.entity_factory as entity_factory
 import handlers.input_handlers as input_handlers
 
 from map.game_map import GameWorld
@@ -35,7 +35,7 @@ def new_game() -> Engine:
     max_monsters_per_room = 2
     max_items_per_room = 2
 
-    player = copy.deepcopy(entity_factories.player)
+    player = copy.deepcopy(entity_factory.player)
 
     engine = Engine(player=player)
 
@@ -60,7 +60,7 @@ def new_game() -> Engine:
 def test_game() -> Engine:
     map_width = 150
     map_height = 150
-    player = copy.deepcopy(entity_factories.player)
+    player = copy.deepcopy(entity_factory.player)
     engine = Engine(player=player)
 
     engine.game_world = GameWorld(

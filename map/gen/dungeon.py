@@ -3,7 +3,7 @@ import  map.tile_types as tiles
 from map.gen.rooms import RectangularRoom, tunnel_between
 import random
 from typing import List, TYPE_CHECKING
-import factories.entity_factories as factory
+import factories.entity_factory as factory
 
 from engine import Engine
 

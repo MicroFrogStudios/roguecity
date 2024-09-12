@@ -4,6 +4,7 @@ from engine import Engine
 from enums import color
 from tcod.console import Console
 from tcod import libtcodpy
+
 class Button:
     
     def __init__(self,x,y,title :str,width=7,height=3,fg =color.button_color,bg = color.black,hover=color.button_hover, decoration="╔═╗║ ║╚═╝", on_click = None) -> None:

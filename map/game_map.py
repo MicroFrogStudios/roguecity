@@ -54,7 +54,7 @@ class GameWorld:
         room = RectangularRoom(1,1,self.map_width-1,self.map_height-1)
         self.engine.game_map.tiles[room.inner] = tile_types.new_floor()
         self.engine.player.place(*room.center, self.engine.game_map)
-        from factories.entity_factories import mystery_egg
+        from factories.entity_factory import mystery_egg
         mystery_egg.spawn(self.engine.game_map,*room.center)
         return None
 

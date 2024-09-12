@@ -17,7 +17,7 @@ from actions import (
 
 import enums.color as color
 import exceptions
-from interface.panels import ContextPanel
+from interface.panels import MapContextPanel
 
 if TYPE_CHECKING:
     from engine import Engine
@@ -212,7 +212,7 @@ class MainGameEventHandler(EventHandler):
 
         super().on_render(console)
         
-        ContextPanel.render(console=console, engine=self.engine)
+        MapContextPanel.render(console=console, engine=self.engine)
          
 
 
@@ -295,7 +295,7 @@ class AskUserEventHandler(EventHandler):
     """Handles user input for actions which require special input."""
 
 
-    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+    def  ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         """By default any key exits this input handler."""
         if event.sym in {  # Ignore modifier keys.
             tcod.event.KeySym.LSHIFT,
@@ -324,7 +324,7 @@ class SelectedEntityHandler(AskUserEventHandler):
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
         """By default any mouse click exits this input handler."""
         
-        for b in ContextPanel.buttons:
+        for b in MapContextPanel.buttons:
             if b.hovering(self.engine) and b.on_click is not None:
                 self.engine.entities = None
                 return b.on_click(self.engine.player.interactor)
@@ -336,7 +336,7 @@ class SelectedEntityHandler(AskUserEventHandler):
 
         super().on_render(console)
         
-        ContextPanel.render(console=console, engine=self.engine)
+        MapContextPanel.render(console=console, engine=self.engine)
          
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         """By default any key exits this input handler."""
@@ -354,6 +354,14 @@ class SelectedEntityHandler(AskUserEventHandler):
         self.engine.entities = None
         return self.on_exit()
 
+class InventoryMenuHandler(AskUserEventHandler):
+    "Handler that shows inventory interface and switches controls to inventory navigation"
+    def on_render(self, console: Console) -> None:
+        return super().on_render(console)
+    
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
+        return super().ev_keydown(event)
+    
 class InventoryEventHandler(AskUserEventHandler):
     """This handler lets the user select an item.
 
@@ -509,7 +517,7 @@ class LookHandler(SelectIndexHandler):
     def on_render(self, console: Console) -> None:
         super().on_render(console)
         
-        ContextPanel.render(console=console, engine=self.engine)
+        MapContextPanel.render(console=console, engine=self.engine)
 
 
 class SingleRangedAttackHandler(SelectIndexHandler):
