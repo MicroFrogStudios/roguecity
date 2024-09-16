@@ -16,7 +16,7 @@ class Item(Entity):
         description: str = "<Missing Description>",
         consumable: ConsumeInteractable = None,
         icon : str = "assets\sprites\\red_egg.png",
-        interactables = None
+        interactables : list[Interactable] = None
     ):
         super().__init__(
             x=x,

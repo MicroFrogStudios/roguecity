@@ -1,5 +1,5 @@
 
-from components.interactable_component import Interactable
+
 from engine import Engine
 from enums import color
 from tcod.console import Console

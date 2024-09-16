@@ -17,6 +17,7 @@ from actions import (
 
 import enums.color as color
 import exceptions
+from interface.navigable_menu import InventoryMenu, TabContainer
 from interface.panels import MapContextPanel
 
 if TYPE_CHECKING:
@@ -187,7 +188,8 @@ class MainGameEventHandler(EventHandler):
         elif key == tcod.event.KeySym.l: # maybe keep for accesibility
             return LookHandler(self.engine)
         elif key == tcod.event.KeySym.ESCAPE: # big menu instead of instquit
-            raise SystemExit()
+            return InventoryMenuHandler(self.engine)
+            # raise SystemExit()
         elif key == tcod.event.KeySym.c:# hot key to big menu
             return CharacterScreenEventHandler(self.engine)
         elif key == tcod.event.KeySym.v:# hot key to big menu
@@ -356,11 +358,21 @@ class SelectedEntityHandler(AskUserEventHandler):
 
 class InventoryMenuHandler(AskUserEventHandler):
     "Handler that shows inventory interface and switches controls to inventory navigation"
+    
+    def __init__(self, engine: actions.Engine):
+        super().__init__(engine)
+        inventoryMenu = InventoryMenu(engine.player.inventory)
+        self.rootMenu = TabContainer(tabs=[inventoryMenu])
+        
     def on_render(self, console: Console) -> None:
-        return super().on_render(console)
+        # super().on_render(console)
+        self.rootMenu.render(console,self.engine)
     
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
-        return super().ev_keydown(event)
+        key = event.sym
+        if key == tcod.event.KeySym.ESCAPE: # big menu instead of instquit
+            return MainGameEventHandler(self.engine)
+        # super().ev_keydown(event)
     
 class InventoryEventHandler(AskUserEventHandler):
     """This handler lets the user select an item.
