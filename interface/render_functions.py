@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import textwrap
 from typing import TYPE_CHECKING, Iterable, Tuple
-
+import config
 import enums.color as color
 
 if TYPE_CHECKING:
@@ -27,7 +27,12 @@ def render_bar(
         x=x+1, y=y, string=f"HP: {current_value}/{maximum_value}", fg=color.bar_text
     )
 
-
+def hline(console:Console,x=0,y=config.screen_height-9,width=None,fg=color.white,bg = None):
+    
+    if width == None:
+        width = config.screen_width - x
+    console.draw_rect(x=x,y=y,width=width,height=1,fg=fg,ch=ord("_"),bg=bg)
+        
 
 def render_dungeon_level(
     console: Console, dungeon_level: int, location: Tuple[int, int]

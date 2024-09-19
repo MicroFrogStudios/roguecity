@@ -329,7 +329,7 @@ class SelectedEntityHandler(AskUserEventHandler):
         for b in MapContextPanel.buttons:
             if b.hovering(self.engine) and b.on_click is not None:
                 self.engine.entities = None
-                return b.on_click(self.engine.player.interactor)
+                return b.on_click()
                 
         self.engine.entities = None
         return self.on_exit()
@@ -362,17 +362,54 @@ class InventoryMenuHandler(AskUserEventHandler):
     def __init__(self, engine: actions.Engine):
         super().__init__(engine)
         inventoryMenu = InventoryMenu(engine.player.inventory)
-        self.rootMenu = TabContainer(tabs=[inventoryMenu])
+        from interface.navigable_menu import BaseMenu
+        dummyTab = BaseMenu([],"SETTINGS")
+        self.rootMenu = TabContainer(tabs=[inventoryMenu,dummyTab],x=0,y=0,width=80,height=40)
         
     def on_render(self, console: Console) -> None:
-        # super().on_render(console)
+        super().on_render(console)
         self.rootMenu.render(console,self.engine)
     
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         key = event.sym
         if key == tcod.event.KeySym.ESCAPE: # big menu instead of instquit
             return MainGameEventHandler(self.engine)
+        elif key in MOVE_KEYS:
+            dx, dy = MOVE_KEYS[key]
+            self.rootMenu.navigate(dx,dy)
+            
+        elif key in CONFIRM_KEYS:
+            return self.rootMenu.on_confirm()
+        elif key == tcod.event.KeySym.TAB:
+            self.rootMenu.navigate(0,0,1)
+            
         # super().ev_keydown(event)
+        
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
+        """By default any mouse click exits this input handler."""
+
+        """Left click confirms a selection."""
+        for c, b in self.rootMenu.current_tab.menu_buttons():
+            if b.hovering(self.engine) and b.on_click is not None:
+                self.engine.entities = None
+                return b.on_click()
+            
+        
+           
+        
+        return super().ev_mousebuttondown(event)
+    
+    def ev_mousewheel(self, event: tcod.event.MouseWheel) -> Action | BaseEventHandler | None:
+        self.rootMenu.navigate(0,-event.y)
+        
+        return super().ev_mousewheel(event)
+    
+    def ev_mousemotion(self, event: tcod.event.MouseMotion) -> None:
+        super().ev_mousemotion(event)
+        for cursor, button in self.rootMenu.current_tab.menu_buttons():
+             if button.hovering(self.engine):
+                 self.rootMenu.current_tab.set_cursor(*cursor)
+                 return
     
 class InventoryEventHandler(AskUserEventHandler):
     """This handler lets the user select an item.

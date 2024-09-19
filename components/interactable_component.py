@@ -63,14 +63,15 @@ class TauntInteraction(Interactable):
     
     def activate(self, action: actions.InteractiveAction) -> None:
         
+        target = action.target_actor
         if action.entity is action.engine.player:
             
             self.engine.message_log.add_message(
-                f"you taunt the {action.target.name}",
+                f"you taunt the {target.name}",
                 color.enemy_atk)
         else:
              self.engine.message_log.add_message(
-                f"The {action.entity.name} taunts the {action.target.name}",
+                f"The {action.entity.name} taunts the {target.name}",
                 color.enemy_atk)
         
     def check_player_activable(self) -> bool:
@@ -92,9 +93,12 @@ class ConsumeInteractable(Interactable):
         else:
             #This is in current map
             self.engine.game_map.entities.remove(entity)
+            
+    def check_player_activable(self) -> bool:
+        return self.engine.player.distance(self.parent.x,self.parent.y) < 2
+
 
 class EatInteraction(ConsumeInteractable):
-    parent: Item
     name = "EAT"
     def __init__(self, amount: int):
         self.amount = amount
@@ -113,9 +117,6 @@ class EatInteraction(ConsumeInteractable):
         else:
             raise Impossible(f"Your health is already full.")
         
-    def check_player_activable(self) -> bool:
-        return self.engine.player.distance(self.parent.x,self.parent.y) < 2
-
 
 class PickUpInteractable(Interactable):
     parent: Item
@@ -134,7 +135,11 @@ class PickUpInteractable(Interactable):
         self.engine.message_log.add_message(f"You picked up the {self.parent.name}!")
 
 
-
+class DropInteractable(Interactable):
+    parent: Item
+    name = "DROP"
+    def activate(self, action: actions.InteractiveAction) -> None:
+        action.entity.inventory.drop(self.parent)
 
 
 class HealingConsumable(ConsumeInteractable):
@@ -153,13 +158,17 @@ class HealingConsumable(ConsumeInteractable):
             self.consume()
         else:
             raise Impossible(f"Your health is already full.")
+
+class scrollCastInteractable(ConsumeInteractable):
+    name = "CAST"
         
-class LightningDamageConsumable(ConsumeInteractable):
+class LightningDamageConsumable(scrollCastInteractable):
+
     def __init__(self, damage: int, maximum_range: int):
         self.damage = damage
         self.maximum_range = maximum_range
 
-    def activate(self, action: actions.ItemAction) -> None:
+    def activate(self, action: actions.InteractiveAction) -> None:
         consumer = action.entity
         target = None
         closest_distance = self.maximum_range + 1.0
@@ -181,21 +190,21 @@ class LightningDamageConsumable(ConsumeInteractable):
         else:
             raise Impossible("No enemy is close enough to strike.")
         
-class ConfusionConsumable(ConsumeInteractable):
+class ConfusionConsumable(scrollCastInteractable):
     def __init__(self, number_of_turns: int):
         self.number_of_turns = number_of_turns
 
-    def get_action(self, consumer: Actor) -> SingleRangedAttackHandler:
+    def get_action(self, activator: Interactor) -> SingleRangedAttackHandler:
         self.engine.message_log.add_message(
             "Select a target location.", color.needs_target
         )
         return SingleRangedAttackHandler(
             self.engine,
-            callback=lambda xy: actions.ItemAction(consumer, self.parent, xy),
+            callback=lambda xy: actions.InteractiveAction(activator,self, xy),
         )
         
 
-    def activate(self, action: actions.ItemAction) -> None:
+    def activate(self, action: actions.InteractiveAction) -> None:
         consumer = action.entity
         target = action.target_actor
 
@@ -215,22 +224,22 @@ class ConfusionConsumable(ConsumeInteractable):
         )
         self.consume()
 
-class FireballDamageConsumable(ConsumeInteractable):
+class FireballDamageConsumable(scrollCastInteractable):
     def __init__(self, damage: int, radius: int):
         self.damage = damage
         self.radius = radius
 
-    def get_action(self, consumer: Actor) -> AreaRangedAttackHandler:
+    def get_action(self, activator: Interactor) -> AreaRangedAttackHandler:
         self.engine.message_log.add_message(
             "Select a target location.", color.needs_target
         )
         return AreaRangedAttackHandler(
             self.engine,
             radius=self.radius,
-            callback=lambda xy: actions.ItemAction(consumer, self.parent, xy),
+            callback=lambda xy: actions.InteractiveAction(activator, self, xy),
         )
 
-    def activate(self, action: actions.ItemAction) -> None:
+    def activate(self, action: actions.InteractiveAction) -> None:
         target_xy = action.target_xy
 
         if not self.engine.game_map.visible[target_xy]:

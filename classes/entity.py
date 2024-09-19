@@ -20,6 +20,8 @@ class Entity:
     """
     parent: Union[GameMap,Inventory]
 
+   
+
     def __init__(
         self,
         parent: Optional[GameMap] = None,
@@ -33,7 +35,7 @@ class Entity:
         blocks_movement: bool = False,
         render_order: RenderOrder = RenderOrder.CORPSE,
         icon: str = "assets\sprites\\red_egg.png",
-        interactables : set[Interactable] = None
+        interactables : set[Interactable] = []
     ):
         self.x = x
         self.y = y
@@ -55,21 +57,22 @@ class Entity:
             for inter in self.interactables:
                 inter.parent = self
 
+    
+    def get_interactables(self) -> set[Interactable]:
+        return self.interactables
 
+
+    def set_interactables(self, interactables:set[Interactable]):
+        self.interactables = interactables
+    
     @property
     def gamemap(self) -> GameMap:
         return self.parent.gamemap
     
-    @property
-    def interactables(self) -> set[Interactable]:
-        return self._interactables
-
-    @interactables.setter
-    def interactables(self, interactables:set[Interactable]):
-        self._interactables = interactables
+   
         
     def addInteractable(self,interactable):
-        self.interactables.add(interactable)
+        self.get_interactables().add(interactable)
 
     def spawn(self: T, gamemap: GameMap, x: int, y: int) -> T:
         """Spawn a copy of this instance at the given location."""

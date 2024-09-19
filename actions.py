@@ -113,37 +113,60 @@ class WaitAction(Action):
 class InteractiveAction(Action):
     
     def __init__(
-        self, interactor: Interactor, interactable : Interactable, target: Optional[Entity] = None
+        self, interactor: Interactor, interactable : Interactable, target_xy: Optional[Tuple[int, int]] = None
     ):
         super().__init__(interactor.parent)
         self.interactable = interactable
-        if  target is None:
-            self.target = interactor.parent
+        if  not target_xy :
+            target_xy = interactor.parent.x,interactor.parent.y
         else:
-            self.target = target
+            self.target_xy = target_xy
             
     def perform(self) -> None:
         """Invoke the items ability, this action will be given to provide context."""
         self.interactable.activate(self)
-
-class ItemAction(Action):
-    def __init__(
-        self, entity: Actor, item: Item, target_xy: Optional[Tuple[int, int]] = None
-    ):
-        super().__init__(entity)
-        self.item = item
-        if not target_xy:
-            target_xy = entity.x, entity.y
-        self.target_xy = target_xy
-
+        
     @property
     def target_actor(self) -> Optional[Actor]:
         """Return the actor at this actions destination."""
         return self.engine.game_map.get_actor_at_location(*self.target_xy)
+    
+    @property
+    def target_entity(self) -> Optional[Entity]:
+        NotImplemented
+        return self.engine.game_map.entities
 
-    def perform(self) -> None:
-        """Invoke the items ability, this action will be given to provide context."""
-        self.item.consumable.activate(self)
+    @property
+    def target_item(self) -> Optional[Item]:
+        NotImplemented
+
+# class ItemAction(Action):
+#     def __init__(
+#         self, entity: Actor, item: Item, target_xy: Optional[Tuple[int, int]] = None
+#     ):
+#         super().__init__(entity)
+#         self.item = item
+#         if not target_xy:
+#             target_xy = entity.x, entity.y
+#         self.target_xy = target_xy
+
+#     @property
+#     def target_actor(self) -> Optional[Actor]:
+#         """Return the actor at this actions destination."""
+#         return self.engine.game_map.get_actor_at_location(*self.target_xy)
+    
+#     @property
+#     def target_entity(self) -> Optional[Entity]:
+#         NotImplemented
+#         return self.engine.game_map.entities
+
+#     @property
+#     def target_item(self) -> Optional[Item]:
+#         NotImplemented
+        
+#     def perform(self) -> None:
+#         """Invoke the items ability, this action will be given to provide context."""
+#         self.item.consumable.activate(self)
 
 class PickupAction(Action):
     """Pickup an item and add it to the inventory, if there is room for it."""
@@ -170,9 +193,9 @@ class PickupAction(Action):
 
         raise exceptions.Impossible("There is nothing here to pick up.")
 
-class DropItem(ItemAction):
-    def perform(self) -> None:
-        self.entity.inventory.drop(self.item)
+# class DropItem(ItemAction):
+#     def perform(self) -> None:
+#         self.entity.inventory.drop(self.item)
 
 class TakeStairsAction(Action):
     def perform(self) -> None:

@@ -48,9 +48,8 @@ food = Item(
     char="%",
     color=(153, 0, 0),
     name="food",
-    consumable=interactables.HealingConsumable(amount=4),
     icon="assets/sprites/meat.png",
-    interactables=[interactables.EatInteraction(4), interactables.PickUpInteractable()]
+    interactables=[interactables.EatInteraction(4) ]
 
 )
 
@@ -58,26 +57,27 @@ lightning_scroll = Item(
     char="~",
     color=(255, 255, 0),
     name="Lightning Scroll",
-    consumable=interactables.LightningDamageConsumable(damage=20, maximum_range=5),
+    interactables=[interactables.LightningDamageConsumable(damage=20, maximum_range=5)],
 )
 
 confusion_scroll = Item(
     char="~",
     color=(207, 63, 255),
     name="Confusion Scroll",
-    consumable=interactables.ConfusionConsumable(number_of_turns=10),
+    interactables=[interactables.ConfusionConsumable(number_of_turns=10)],
 )
 
 fireball_scroll = Item(
     char="~",
     color=(255, 0, 0),
     name="Fireball Scroll",
-    consumable=interactables.FireballDamageConsumable(damage=12, radius=3),
+    interactables=[interactables.FireballDamageConsumable(damage=12, radius=3)],
 )
 
 mystery_egg = Item(
     char="o",
     color=(240,0,0),
     name= "Mysterious Egg",
-    description="Red egg emanating a strange power"
+    description="Red egg emanating a strange power",
+    
 )

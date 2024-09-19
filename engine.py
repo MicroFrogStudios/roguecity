@@ -50,7 +50,7 @@ class Engine:
         self.update_camera_references()
         self.game_map.render(console)
         self.message_log.render(console=console,x=21,y=45, width=40, height=5)
-        console.draw_rect(x=0,y=config.screen_height-9,width=config.screen_width,height=1,fg=color.white,ch=ord("_"))
+        rend.hline(console,0,config.screen_height-9)
         rend.render_bar(
             console=console,
             current_value=self.player.fighter.hp,

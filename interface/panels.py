@@ -5,6 +5,7 @@ import tcod
 from tcod.console import Console
 
 
+
 import config
 from enums import color
 
@@ -14,6 +15,7 @@ from interface.render_functions import render_bar, wrap
 from engine import Engine
 if TYPE_CHECKING:
     from classes.entity import Entity
+    from classes.item import Item
 
 
 
@@ -58,23 +60,44 @@ class ContextPanel:
         ordered_possible_button_positions = [(cls.x_offset+3+i*8,cls.desc_start_y+y_offset+1) for i in range(0,3)] + [(cls.x_offset+3+i*8,cls.desc_start_y+y_offset+5) for i in range(0,3)]
             
         
-        cls.buttons = [Button(*ordered_possible_button_positions[index],inter.name,on_click=inter.get_action)
+        cls.buttons = [Button(*ordered_possible_button_positions[index],
+                              inter.name,
+                              on_click= lambda i = inter: i.get_action(engine.player.interactor))
                     if inter.check_player_activable()
-                    else Button(*ordered_possible_button_positions[index],inter.name,fg=color.button_grey,hover=color.button_grey) 
-                    for index, inter in enumerate(context_entity.interactables)]
-        
+                    else Button(*ordered_possible_button_positions[index],inter.name,fg=color.button_grey,text_color=color.button_grey,hover=color.button_grey) 
+                    for index, inter in enumerate(context_entity.get_interactables())]
         for b in cls.buttons:
+            if b.on_click and b.hovering(engine):
+                b.fg = color.button_hover
+            else:
+                b.fg = color.button_color
             b.render(console,engine)
+            
 
                 
 
 
-# class InventoryContextPanel(ContextPanel):
-#     """ Context panel when viewing inventory"""
-#     @classmethod
-#     def render(cls, console: Console, engine: Engine) -> None:
-#         return super().render(console, engine, )
-    
+class InventoryContextPanel(ContextPanel):
+    """ Context panel when viewing inventory"""
+    @classmethod
+    def render(cls, console: Console, engine: Engine,context_item: Item) -> None:
+        desc_wrap_list = list(wrap(context_item.description, 20))
+        from interface.button import Button
+        
+        frame_height = min(50,cls.desc_start_y+len(desc_wrap_list)+10)
+        console.draw_frame(x=cls.x_offset, y=0, width=cls.panel_width, height=frame_height,title=context_item.name,clear=True,fg=cls.fg,bg=color.black )
+        image = tcod.image.load(context_item.icon)[:, :, :3]
+        ## SEMI graphics must use 56*30 pixels resolution
+        console.draw_semigraphics(image,cls.x_offset+ 1,1)
+        if hasattr(context_item,"fighter"):
+            render_bar(console,context_item.fighter.hp,context_item.fighter.max_hp,26,cls.x_offset+2,17)
+        
+        y_offset = 0
+        for line in desc_wrap_list:
+            console.print(x=cls.x_offset+3, y=cls.desc_start_y + y_offset, string=line, fg=color.menu_text)
+            y_offset += 1
+
+
     
 class MapContextPanel(ContextPanel):
     
@@ -99,4 +122,4 @@ class MapContextPanel(ContextPanel):
             if top_entity.x >= config.screen_width//2:
                 cls.x_offset = 0
                 
-                super().render(console,engine,top_entity)
+            super().render(console,engine,top_entity)
