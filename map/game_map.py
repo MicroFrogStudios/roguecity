@@ -122,6 +122,21 @@ class GameMap:
                 return actor
 
         return None
+    
+    def closest_visible_entity(self):
+        player = self.engine.player
+        target = None
+        closest_distance = 99.
+
+        for entity in self.entities:
+            if entity is not player and self.visible[entity.x, entity.y]:
+                distance = player.distance(entity.x, entity.y)
+
+                if distance < closest_distance:
+                    target = entity
+                    closest_distance = distance
+                    
+        return target
 
     def in_bounds(self, x: int, y: int) -> bool:
         """Return True if x and y are inside of the bounds of this map."""

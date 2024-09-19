@@ -70,7 +70,7 @@ def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: in
 
         if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
             if random.random() < 0.8:
-                factory.orc.spawn(dungeon,x,y)
+                factory.weak_skuly.spawn(dungeon,x,y)
             else:
                 factory.troll.spawn(dungeon,x,y)
 

@@ -181,7 +181,13 @@ class MainGameEventHandler(EventHandler):
 
         elif key == tcod.event.KeySym.i: # hot key to big menu
             return InventoryActivateHandler(self.engine)
-
+        elif key == tcod.event.KeySym.e:
+            contextEntity = self.engine.game_map.closest_visible_entity()
+            if contextEntity:
+                self.engine.entities =[contextEntity]            
+                return SelectedEntityHandler(self.engine)
+            self.engine.message_log.add_message("You see nothing interesting",color.impossible)
+            
         elif key == tcod.event.KeySym.r: #refactored to big menu
             return InventoryDropHandler(self.engine)
         
@@ -389,15 +395,12 @@ class InventoryMenuHandler(AskUserEventHandler):
         """By default any mouse click exits this input handler."""
 
         """Left click confirms a selection."""
+        print(event.button)
         for c, b in self.rootMenu.current_tab.menu_buttons():
-            if b.hovering(self.engine) and b.on_click is not None:
-                self.engine.entities = None
-                return b.on_click()
-            
-        
-           
-        
-        return super().ev_mousebuttondown(event)
+            if b.hovering(self.engine) and event.button == 1:
+                return self.rootMenu.on_confirm()
+            if event.button == 3:
+                return super().ev_mousebuttondown(event)
     
     def ev_mousewheel(self, event: tcod.event.MouseWheel) -> Action | BaseEventHandler | None:
         self.rootMenu.navigate(0,-event.y)

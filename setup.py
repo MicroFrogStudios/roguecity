@@ -18,7 +18,7 @@ from map.game_map import GameWorld
 
 
 # Load the background image and remove the alpha channel.
-background_image = tcod.image.load("assets/sprites/red_egg.png")[:, :, :3]
+background_image = tcod.image.load("assets/sprites/background.png")[:, :, :3]
 
 
 def new_game() -> Engine:

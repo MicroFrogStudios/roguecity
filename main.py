@@ -11,9 +11,6 @@ import exceptions
 import handlers.input_handlers as input_handlers
 
 def main():
-    screen_width = 120
-    screen_height = 50
-
 
     tileset_basic = tcod.tileset.load_tilesheet(
         "tilesets/basic.png", 32, 8, tcod.tileset.CHARMAP_TCOD
@@ -29,7 +26,7 @@ def main():
     
 
     
-
+    FLAGS = tcod.context.SDL_WINDOW_RESIZABLE | tcod.context.SDL_WINDOW_MAXIMIZED
     handler: input_handlers.BaseEventHandler = setup.MainMenu()
 
     with tcod.context.new(
@@ -37,6 +34,7 @@ def main():
         tileset=tileset,
         title="Rogue City project",
         vsync=True,
+        sdl_window_flags=FLAGS
     ) as context:
         root_console = tcod.console.Console(config.screen_width, config.screen_height, order="F")
         try:

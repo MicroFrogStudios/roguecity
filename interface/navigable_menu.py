@@ -167,8 +167,8 @@ class InventoryMenu(BaseMenu):
             sub.render(console,engine,selected=i + self.page_size*self.current_page == self.submenu_cursor)
             inv_i = self.submenus.index(sub)
         
-          
-        InventoryContextPanel.render(console,engine,self.inventory.items[self.submenu_cursor])
+        if self.inventory.items:
+            InventoryContextPanel.render(console,engine,self.inventory.items[self.submenu_cursor])
             
     def on_confirm(self):
         return self.submenus[self.submenu_cursor].on_confirm()

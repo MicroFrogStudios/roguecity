@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Optional, TYPE_CHECKING
 
 import actions
+
 from components.interactor_component import Interactor
 import enums.color as color
 from components import ai
@@ -14,6 +15,7 @@ from exceptions import Impossible
 
 if TYPE_CHECKING:
     from classes.item import Item
+    from classes.actor import Actor
 
 import exceptions
 from handlers.input_handlers import (
@@ -56,10 +58,10 @@ class Interactable(BaseComponent):
 class TauntInteraction(Interactable):
     
     name = "TAUNT"
-    
+    parent : Actor
     def get_action(self, activator: Interactor) -> Optional[ActionOrHandler]:
         """Try to return the action for this item."""
-        return actions.InteractiveAction(activator,self,self.parent)
+        return actions.InteractiveAction(activator,self,(self.parent.x,self.parent.y))
     
     def activate(self, action: actions.InteractiveAction) -> None:
         
@@ -74,8 +76,8 @@ class TauntInteraction(Interactable):
                 f"The {action.entity.name} taunts the {target.name}",
                 color.enemy_atk)
         
-    def check_player_activable(self) -> bool:
-        return self.engine.player.distance(self.parent.x,self.parent.y) < 5
+    def check_player_activable(self) -> bool:        
+        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 5
 
 class ConsumeInteractable(Interactable):
     parent: Item
@@ -141,23 +143,6 @@ class DropInteractable(Interactable):
     def activate(self, action: actions.InteractiveAction) -> None:
         action.entity.inventory.drop(self.parent)
 
-
-class HealingConsumable(ConsumeInteractable):
-    def __init__(self, amount: int):
-        self.amount = amount
-
-    def activate(self, action: actions.ItemAction) -> None:
-        consumer = action.entity
-        amount_recovered = consumer.fighter.heal(self.amount)
-
-        if amount_recovered > 0:
-            self.engine.message_log.add_message(
-                f"You consume the {self.parent.name}, and recover {amount_recovered} HP!",
-                color.health_recovered,
-            )
-            self.consume()
-        else:
-            raise Impossible(f"Your health is already full.")
 
 class scrollCastInteractable(ConsumeInteractable):
     name = "CAST"

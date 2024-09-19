@@ -20,16 +20,17 @@ player = Actor(
     icon= "assets\sprites\magito_azul.png"
 )
 
-orc = Actor(
-    char="o",
-    color=(63, 127, 63),
-    name="Orc",
-    description= "A foul beast coming from the deepest caves back in the shadow lands, now frenzied in the search for meat and blood",
+weak_skuly = Actor(
+    char="i",
+    color=(255, 255, 255),
+    name="Lost skull",
+    description= "Eerie skull walking on two legs. Harmless if left alone",
     ai_cls=HostileEnemy,
-    fighter=Fighter(hp=10, defense=0, power=3),
+    fighter=Fighter(hp=10, defense=0, power=1),
     inventory=Inventory(capacity=0),
     interactor=Interactor(),
     level=Level(xp_given=35),
+    icon= "assets\sprites\skuly.png",
     interactables=[interactables.TauntInteraction()],
 )
 troll = Actor(
@@ -58,6 +59,7 @@ lightning_scroll = Item(
     color=(255, 255, 0),
     name="Lightning Scroll",
     interactables=[interactables.LightningDamageConsumable(damage=20, maximum_range=5)],
+    icon="assets/sprites/scroll_basic.png",
 )
 
 confusion_scroll = Item(
@@ -65,6 +67,7 @@ confusion_scroll = Item(
     color=(207, 63, 255),
     name="Confusion Scroll",
     interactables=[interactables.ConfusionConsumable(number_of_turns=10)],
+    icon="assets/sprites/scroll_basic.png",
 )
 
 fireball_scroll = Item(
@@ -72,6 +75,7 @@ fireball_scroll = Item(
     color=(255, 0, 0),
     name="Fireball Scroll",
     interactables=[interactables.FireballDamageConsumable(damage=12, radius=3)],
+    icon="assets/sprites/scroll_basic.png",
 )
 
 mystery_egg = Item(
