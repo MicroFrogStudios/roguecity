@@ -54,7 +54,22 @@ class Interactable(BaseComponent):
         """
         raise NotImplementedError()
 
-
+class TalkInteraction():
+    name = "TALK"
+    parent : Actor
+    def __init__(self, *lines :str,ordered = True) -> None:
+        self.lines = lines
+        self.ordered = ordered
+    
+    def get_action(self, activator: Interactor) -> Optional[ActionOrHandler]:
+        """Try to return the action for this item."""
+        return actions.InteractiveAction(activator,self,(self.parent.x,self.parent.y))
+    
+    def activate(self, action: actions.InteractiveAction) -> None:
+        
+        target = action.target_actor
+        
+        
 class TauntInteraction(Interactable):
     
     name = "TAUNT"

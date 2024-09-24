@@ -1,6 +1,10 @@
+import time
+from typing import Optional
 import tcod
 
+from components.ai import PlayerAI
 import config
+
 import setup
 
 
@@ -38,15 +42,20 @@ def main():
     ) as context:
         root_console = tcod.console.Console(config.screen_width, config.screen_height, order="F")
         try:
+            current_task : Optional[PlayerAI] = None
             while True:
                 root_console.clear()
                 handler.on_render(console=root_console)
                 context.present(root_console,keep_aspect=True, integer_scaling=True)
-
+                
                 try:
-                    for event in tcod.event.wait():
+                    
+                    for event in tcod.event.get():
                         context.convert_event(event)
                         handler = handler.handle_events(event)
+                    if hasattr(handler, "player_controller"):
+                        handler.handle_player_tasks()
+                      
                 except Exception:  # Handle exceptions in game.
                     traceback.print_exc()  # Print error to stderr.
                     # Then print the error to the message log.

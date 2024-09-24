@@ -13,6 +13,7 @@ import exceptions
 import tcod.constants as tconst
 import config
 import interface.render_functions as rend
+from player_controller import PlayerController
 
 if TYPE_CHECKING:
   
@@ -35,6 +36,7 @@ class Engine:
         self.camera_x_offset = 0
         (self.x_left_ref,self.x_right_ref, self.y_left_ref, self.y_right_ref) = (0,0,self.camera_width,self.camera_height)
         self.entities = None
+        self.player_controller : PlayerController = PlayerController.get_instance(self.player)
 
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
@@ -79,7 +81,7 @@ class Engine:
         self.game_map.visible[:] = compute_fov(
             self.game_map.tiles["transparent"],
             (self.player.x, self.player.y),
-            radius=8, light_walls= True, 
+            radius=16, light_walls= True, 
             algorithm=tconst.FOV_SYMMETRIC_SHADOWCAST
         )
         # If a tile is "visible" it should be added to "explored".

@@ -93,12 +93,14 @@ class MeleeAction(ActionWithDirection):
             
             self.engine.message_log.add_message(f"{attack_desc} for {damage} hit points.",attack_color)
             target.fighter.hp -= damage
+            if target == self.engine.player:
+                self.engine.player_controller.interrupt()
         else:
             self.engine.message_log.add_message(f"{attack_desc} but does no damage.",attack_color)
 
 class BumpAction(ActionWithDirection):
     def perform(self) -> None:
-        if self.target_actor:
+        if self.target_actor and self.target_actor.hostile:
             return MeleeAction(self.entity, self.dx, self.dy).perform()
 
         else:
@@ -140,33 +142,6 @@ class InteractiveAction(Action):
     def target_item(self) -> Optional[Item]:
         NotImplemented
 
-# class ItemAction(Action):
-#     def __init__(
-#         self, entity: Actor, item: Item, target_xy: Optional[Tuple[int, int]] = None
-#     ):
-#         super().__init__(entity)
-#         self.item = item
-#         if not target_xy:
-#             target_xy = entity.x, entity.y
-#         self.target_xy = target_xy
-
-#     @property
-#     def target_actor(self) -> Optional[Actor]:
-#         """Return the actor at this actions destination."""
-#         return self.engine.game_map.get_actor_at_location(*self.target_xy)
-    
-#     @property
-#     def target_entity(self) -> Optional[Entity]:
-#         NotImplemented
-#         return self.engine.game_map.entities
-
-#     @property
-#     def target_item(self) -> Optional[Item]:
-#         NotImplemented
-        
-#     def perform(self) -> None:
-#         """Invoke the items ability, this action will be given to provide context."""
-#         self.item.consumable.activate(self)
 
 class PickupAction(Action):
     """Pickup an item and add it to the inventory, if there is room for it."""
@@ -193,9 +168,6 @@ class PickupAction(Action):
 
         raise exceptions.Impossible("There is nothing here to pick up.")
 
-# class DropItem(ItemAction):
-#     def perform(self) -> None:
-#         self.entity.inventory.drop(self.item)
 
 class TakeStairsAction(Action):
     def perform(self) -> None:

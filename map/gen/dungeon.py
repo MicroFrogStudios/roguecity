@@ -72,7 +72,7 @@ def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: in
             if random.random() < 0.8:
                 factory.weak_skuly.spawn(dungeon,x,y)
             else:
-                factory.troll.spawn(dungeon,x,y)
+                factory.rat_small.spawn(dungeon,x,y)
 
     for i in range(number_of_items):
         x = random.randint(room.x1 + 1, room.x2 - 1)

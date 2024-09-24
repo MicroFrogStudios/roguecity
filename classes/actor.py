@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+from enum import Enum
 from classes.entity import Entity
 from typing import Optional, Type, Tuple, TYPE_CHECKING
 from enums.render_order import RenderOrder
@@ -9,10 +10,18 @@ if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.fighter_component import Fighter, Level
     from components.inventory_component import Inventory
-    from components.interactor_component import Interactor
+    
+from components.interactor_component import Interactor
 
 
 class Actor(Entity):
+        
+    class Type(Enum):
+        NPC = "NPC"
+        PLAYER = "PLAYER"
+        MONSTER = "MONSTER"
+        CRITTER = "CRITTER"
+            
     def __init__(
         self,
         *,
@@ -25,8 +34,8 @@ class Actor(Entity):
         ai_cls: Type[BaseAI],
         fighter: Fighter,
         inventory: Inventory,
-        interactor: Interactor,
-        level: Level,
+        hostile: bool,
+        actor_type,
         icon: str = "assets\sprites\\red_egg.png",
         interactables = None
 
@@ -43,8 +52,8 @@ class Actor(Entity):
             icon=icon,
             interactables=interactables
         )
-
-        self.ai: Optional[BaseAI] = ai_cls(self)
+        if ai_cls:
+            self.ai: Optional[BaseAI] = ai_cls(self)
 
         self.fighter = fighter
         self.fighter.parent = self
@@ -53,11 +62,11 @@ class Actor(Entity):
         self.inventory.parent = self
 
 
-        self.interactor = interactor
+        self.interactor = Interactor()
         self.interactor.parent = self
         
-        self.level = level
-        self.level.parent = self
+        self.hostile = hostile
+        self.actor_type = actor_type
 
     @property
     def is_alive(self) -> bool:

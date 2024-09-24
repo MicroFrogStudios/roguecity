@@ -7,8 +7,12 @@ import tcod
 
 from actions import Action, MeleeAction, MovementAction, WaitAction, BumpAction
 
+
+
 if TYPE_CHECKING:
     from classes.actor import Actor
+    from classes.entity import Entity
+    from classes.item import Item
 
 class BaseAI(Action):
 
@@ -44,6 +48,77 @@ class BaseAI(Action):
 
         # Convert from List[List[int]] to List[Tuple[int, int]].
         return [(index[0], index[1]) for index in path]
+
+
+class PlayerAI(BaseAI):
+    
+    
+    def finished(self):
+        raise NotImplementedError()
+    
+class PlayerInteract(PlayerAI):
+    
+    def __init__(self, entity: Actor,target : Entity):
+        super().__init__(entity)
+        self.path: List[Tuple[int, int]] = []
+        self.target : Entity = target
+        self._finished = False
+
+    def finished(self):
+        return self._finished
+    
+    def perform(self) -> None:
+        """Follows the target at certain distance"""
+        if self.target is None:
+            return None
+        dx = self.target.x - self.entity.x
+        dy = self.target.y - self.entity.y
+        distance = max(abs(dx), abs(dy))  # Chebyshev distance.
+
+        
+        if distance <= 1:
+            self._finished = True
+            if hasattr(self.target,"pickUpInteractable"):
+                self.target : Item
+                return self.target.pickUpInteractable.get_action(self.entity.interactor).perform()
+            elif hasattr(self.target,"hostile") and self.target.hostile:
+                return MeleeAction(self.entity, dx, dy).perform()
+        
+        self.path = self.get_path_to(self.target.x, self.target.y)
+
+        if self.path:
+            dest_x, dest_y = self.path.pop(0)
+            
+            return MovementAction(
+                self.entity, (dest_x - self.entity.x), (dest_y - self.entity.y),
+            ).perform()
+        
+        self.target = None
+    
+class PlayerPathing(PlayerAI):
+    def __init__(self, entity: Actor, target):
+        super().__init__(entity)
+        self.path: List[Tuple[int, int]] = []
+        self.target : Tuple[int,int] = target
+    
+    
+    def finished(self):
+        return self.target is None
+    def perform(self) -> None:
+        """Follows the target at certain distance"""
+        if self.target is None:
+            return None
+        
+        self.path = self.get_path_to(self.target[0], self.target[1])
+
+        if self.path:
+            dest_x, dest_y = self.path.pop(0)
+            
+            return MovementAction(
+                self.entity, (dest_x - self.entity.x), (dest_y - self.entity.y),
+            ).perform()
+        
+        self.target = None
     
 class HostileEnemy(BaseAI):
     def __init__(self, entity: Actor):
@@ -111,3 +186,38 @@ class ConfusedEnemy(BaseAI):
             # The actor will either try to move or attack in the chosen random direction.
             # Its possible the actor will just bump into the wall, wasting a turn.
             return BumpAction(self.entity, direction_x, direction_y,).perform()
+        
+class IdleNeutral(BaseAI):
+    
+    def perform(self) -> None:
+        """Does nothing as its the idle action"""
+        pass
+    
+class FollowNeutral(BaseAI):
+    
+    def __init__(self, entity: Actor,target = None, follow_distance=3,):
+        super().__init__(entity)
+        self.target = target
+        self.follow_distance = follow_distance
+        self.path: List[Tuple[int, int]] = []
+    
+    def perform(self) -> None:
+        """Follows the target at certain distance"""
+        if self.target == None:
+            self.target = self.engine.player
+        dx = self.target.x - self.entity.x
+        dy = self.target.y - self.entity.y
+        distance = max(abs(dx), abs(dy))  # Chebyshev distance.
+
+        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+
+            self.path = self.get_path_to(self.target.x, self.target.y)
+
+        if self.path and distance != self.follow_distance:
+            dest_x, dest_y = self.path.pop(0)
+            direction = 1 if distance > self.follow_distance else -1
+            return MovementAction(
+                self.entity, direction*(dest_x - self.entity.x), direction*(dest_y - self.entity.y),
+            ).perform()
+        
+        return WaitAction(self.entity).perform()

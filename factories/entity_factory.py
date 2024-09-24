@@ -1,8 +1,8 @@
 
 from classes.actor import Actor
 from classes.item import Item
-from components.ai import HostileEnemy
-from components.fighter_component import Fighter, Level
+from components import ai
+from components.fighter_component import Fighter
 import components.interactable_component as interactables
 from components.interactor_component import Interactor
 from components.inventory_component import Inventory
@@ -12,37 +12,52 @@ player = Actor(
     color=(255, 255, 255),
     name="Player",
     description= "This is you",
-    ai_cls=HostileEnemy,
+    ai_cls=None,
     fighter=Fighter(hp=30, defense=2, power=5),
-    interactor=Interactor(),
     inventory=Inventory(capacity=26),
-    level=Level(level_up_base=200),
-    icon= "assets\sprites\magito_azul.png"
+    icon= "assets\sprites\magito_azul.png",
+    hostile=False,
+    actor_type=Actor.Type.PLAYER
 )
+old_man = Actor(
+    char="☺",
+    color=(0,0,50),
+    name="ragged old man",
+    description= "Long beard, blinded eyes, with midnight blue robes, wandering the tunnels. Maybe he can help",
+    hostile=False,
+    actor_type=Actor.Type.NPC,
+    ai_cls=ai.IdleNeutral,
+    interactables=[interactables.TalkInteraction()],
+    icon= "assets/sprites/magito_azul.png",
+    fighter=Fighter(hp=15, defense=0, power=1),
+    inventory=Inventory(capacity=0),
+    )
 
 weak_skuly = Actor(
     char="i",
     color=(255, 255, 255),
     name="Lost skull",
     description= "Eerie skull walking on two legs. Harmless if left alone",
-    ai_cls=HostileEnemy,
-    fighter=Fighter(hp=10, defense=0, power=1),
+    hostile=True,
+    actor_type=Actor.Type.MONSTER,
+    ai_cls=ai.HostileEnemy,
+    fighter=Fighter(hp=10, defense=0, power=2),
     inventory=Inventory(capacity=0),
-    interactor=Interactor(),
-    level=Level(xp_given=35),
     icon= "assets\sprites\skuly.png",
     interactables=[interactables.TauntInteraction()],
 )
-troll = Actor(
-    char="T",
-    color=(0, 127, 0),
-    name="Troll",
-    ai_cls=HostileEnemy,
-    fighter=Fighter(hp=16, defense=1, power=4),
+rat_small = Actor(
+    char="r",
+    color=(100, 100, 100),
+    name="rat",
+    hostile=False,
+    actor_type=Actor.Type.CRITTER,
+    description="A small mammal looking for food",
+    ai_cls=ai.FollowNeutral,
+    fighter=Fighter(hp=1, defense=0, power=1),
     inventory=Inventory(capacity=0),
-    interactor=Interactor(),
-    level=Level(xp_given=100),
     interactables=[interactables.TauntInteraction()],
+    icon= "assets/sprites/raticuli.png",
 )
 
 food = Item(
@@ -83,5 +98,7 @@ mystery_egg = Item(
     color=(240,0,0),
     name= "Mysterious Egg",
     description="Red egg emanating a strange power",
+    icon = "assets/sprites/red_egg.png"
     
 )
+
