@@ -1,26 +1,57 @@
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
+
 from enums.render_order import RenderOrder
 import enums.color as color
 if TYPE_CHECKING:
     from classes.actor import Actor
-
+    from actions import Action
 from components.base_component import BaseComponent
 
 
 class Fighter(BaseComponent):
     parent: Actor
-    def __init__(self, hp: int, defense: int, power: int):
+    def __init__(self, hp: int, defense: int, power: int,magic:int):
         self.max_hp = hp
         self._hp = hp
         self.defense = defense
         self.power = power
+        self.magic = magic
 
     @property
     def hp(self) -> int:
         return self._hp
 
+    def att_bonus(self,att):
+        total_bonus = 0
+        for e in self.parent.equipment.slots.values():
+            if e is not None:
+                total_bonus += getattr(e,f"{att}_bonus")        
+        return total_bonus
+        
+    
+    
+    
+    @property
+    def power_bonus(self):
+        return self.att_bonus("power")
+    
+    @property
+    def defense_bonus(self):
+        return self.att_bonus("defense")
+    
+    @property
+    def hp_bonus(self):
+        return self.att_bonus("hp")
+    
+    @property
+    def magic_bonus(self):
+        return self.att_bonus("magic")
+
+    @property
+    def weapon(self):
+        return self.parent.equipment.weapon
     @hp.setter
     def hp(self, value: int) -> None:
         self._hp = max(0, min(value, self.max_hp))
@@ -63,4 +94,15 @@ class Fighter(BaseComponent):
 
     def take_damage(self, amount: int) -> None:
         self.hp -= amount
+    
+    def calc_damage(self,enemy :Fighter):
+        return self.power + self.power_bonus - enemy.defense - enemy.defense_bonus
+    
+    def melee_special_effect(self, action :Action):
+        
+        if self.weapon and self.weapon.has_effect():
+            self.weapon.activate_effect()
+        
+        
+        
 

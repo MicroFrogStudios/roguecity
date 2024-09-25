@@ -1,36 +1,36 @@
 
 from classes.actor import Actor
-from classes.item import Item
+from classes.item import Item, Equipable
 from components import ai
 from components.fighter_component import Fighter
 import components.interactable_component as interactables
-from components.interactor_component import Interactor
+from enums import color
 from components.inventory_component import Inventory
-
+from factories import dialogue_factory
 player = Actor(
     char="@",
     color=(255, 255, 255),
     name="Player",
     description= "This is you",
-    ai_cls=None,
-    fighter=Fighter(hp=30, defense=2, power=5),
-    inventory=Inventory(capacity=26),
+    ai_cls=ai.IdleNeutral,
+    fighter=Fighter(hp=10, defense=0, power=1,magic=1),
+    inventory=Inventory(capacity=27),
     icon= "assets\sprites\magito_azul.png",
     hostile=False,
     actor_type=Actor.Type.PLAYER
 )
 old_man = Actor(
     char="☺",
-    color=(0,0,50),
+    color=(0,0,100),
     name="ragged old man",
     description= "Long beard, blinded eyes, with midnight blue robes, wandering the tunnels. Maybe he can help",
     hostile=False,
     actor_type=Actor.Type.NPC,
     ai_cls=ai.IdleNeutral,
-    interactables=[interactables.TalkInteraction()],
+    interactables=[interactables.TalkInteraction(dialogue_factory.old_man_dialogue),interactables.AssaultInteraction()],
     icon= "assets/sprites/magito_azul.png",
-    fighter=Fighter(hp=15, defense=0, power=1),
-    inventory=Inventory(capacity=0),
+    fighter=Fighter(hp=15, defense=0, power=1,magic=10),
+    inventory=Inventory(capacity=1),
     )
 
 weak_skuly = Actor(
@@ -41,7 +41,7 @@ weak_skuly = Actor(
     hostile=True,
     actor_type=Actor.Type.MONSTER,
     ai_cls=ai.HostileEnemy,
-    fighter=Fighter(hp=10, defense=0, power=2),
+    fighter=Fighter(hp=4, defense=0, power=1,magic=0),
     inventory=Inventory(capacity=0),
     icon= "assets\sprites\skuly.png",
     interactables=[interactables.TauntInteraction()],
@@ -54,7 +54,7 @@ rat_small = Actor(
     actor_type=Actor.Type.CRITTER,
     description="A small mammal looking for food",
     ai_cls=ai.FollowNeutral,
-    fighter=Fighter(hp=1, defense=0, power=1),
+    fighter=Fighter(hp=1, defense=0, power=1,magic=0),
     inventory=Inventory(capacity=0),
     interactables=[interactables.TauntInteraction()],
     icon= "assets/sprites/raticuli.png",
@@ -65,7 +65,9 @@ food = Item(
     color=(153, 0, 0),
     name="food",
     icon="assets/sprites/meat.png",
-    interactables=[interactables.EatInteraction(4) ]
+    interactables=[interactables.EatInteraction(4) ],
+    description= "Heals you a certain amount"
+    
 
 )
 
@@ -100,5 +102,13 @@ mystery_egg = Item(
     description="Red egg emanating a strange power",
     icon = "assets/sprites/red_egg.png"
     
+)
+
+broken_sword = Equipable(
+    char="/",
+    color=color.gray,
+    name="Broken sword",
+    description="Dull sword missing its tip.",
+    eq_type="weapon",
 )
 

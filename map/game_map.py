@@ -54,9 +54,12 @@ class GameWorld:
         room = RectangularRoom(1,1,self.map_width-1,self.map_height-1)
         self.engine.game_map.tiles[room.inner] = tile_types.new_floor()
         self.engine.player.place(*room.center, self.engine.game_map)
-        from factories.entity_factory import mystery_egg, food
-        mystery_egg.spawn(self.engine.game_map,*room.center)
+        from factories.entity_factory import mystery_egg, food, old_man, broken_sword
+        egg = mystery_egg.spawn(self.engine.game_map,*room.center)
         food.spawn(self.engine.game_map,*room.center)
+        broken_sword.spawn(self.engine.game_map,room.center[0]+2,room.center[1]+2)
+        spawned_old = old_man.spawn(self.engine.game_map,room.center[0],room.center[1]+3)
+        spawned_old.inventory.add(egg)
 
         
         return None

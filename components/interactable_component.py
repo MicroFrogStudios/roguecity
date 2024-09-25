@@ -4,7 +4,9 @@ from typing import Optional, TYPE_CHECKING
 
 import actions
 
-from components.interactor_component import Interactor
+from classes.dialogue import Dialogue
+
+
 import enums.color as color
 from components import ai
 from components.inventory_component import Inventory
@@ -14,8 +16,10 @@ from exceptions import Impossible
 
 
 if TYPE_CHECKING:
+    from components.interactor_component import Interactor
     from classes.item import Item
     from classes.actor import Actor
+    from classes.item import Equipable
 
 import exceptions
 from handlers.input_handlers import (
@@ -28,14 +32,6 @@ from handlers.input_handlers import (
 class Interactable(BaseComponent):
 
 
-    # def __init__(self, name, tooltip) -> None:
-    #     super().__init__()
-    #     self.name = name
-    #     self.tooltip = tooltip
-
-    # def __init__(self,name:str, tooltip:str = "") -> None:
-    #     self.name=name
-    #     self.tooltip=tooltip
     name = "<NULL>"
     def get_action(self, activator: Interactor) -> Optional[ActionOrHandler]:
         """Try to return the action for this item."""
@@ -54,30 +50,52 @@ class Interactable(BaseComponent):
         """
         raise NotImplementedError()
 
-class TalkInteraction():
-    name = "TALK"
-    parent : Actor
-    def __init__(self, *lines :str,ordered = True) -> None:
-        self.lines = lines
-        self.ordered = ordered
+class ActorInteraction(Interactable):
     
+    parent : Actor
     def get_action(self, activator: Interactor) -> Optional[ActionOrHandler]:
         """Try to return the action for this item."""
         return actions.InteractiveAction(activator,self,(self.parent.x,self.parent.y))
+    
+    def check_player_activable(self) -> bool:
+        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 5
+
+    
+class TalkInteraction(ActorInteraction):
+    name = "TALK"
+    
+    def __init__(self, dialogue :Dialogue) -> None:
+        self.dialogue = dialogue
+    
     
     def activate(self, action: actions.InteractiveAction) -> None:
         
+        talked_line = self.dialogue.get_next_line(self.engine,self)
+        self.engine.message_log.add_message(f"The {self.parent.name} says: {talked_line}",color.welcome_text)
+        
+class AssaultInteraction(ActorInteraction):
+    name = "ASSAULT"
+    
+    def __init__(self, cry = "What are you doing?!") -> None:
+        self.cry = cry
+        
+    def check_player_activable(self) -> bool:        
+        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) <= 1
+
+    def activate(self, action: actions.InteractiveAction) -> None:
+        
         target = action.target_actor
-        
-        
-class TauntInteraction(Interactable):
+        target.hostile = True
+        (x,y) = action.target_xy
+        dx = x - action.entity.x
+        dy = y - action.entity.y
+        actions.MeleeAction(action.entity,dx,dy)
+        self.engine.message_log.add_message(f"The {self.parent.name} says: {self.cry}")
+      
+class TauntInteraction(ActorInteraction):
     
     name = "TAUNT"
-    parent : Actor
-    def get_action(self, activator: Interactor) -> Optional[ActionOrHandler]:
-        """Try to return the action for this item."""
-        return actions.InteractiveAction(activator,self,(self.parent.x,self.parent.y))
-    
+        
     def activate(self, action: actions.InteractiveAction) -> None:
         
         target = action.target_actor
@@ -90,16 +108,17 @@ class TauntInteraction(Interactable):
              self.engine.message_log.add_message(
                 f"The {action.entity.name} taunts the {target.name}",
                 color.enemy_atk)
-        
-    def check_player_activable(self) -> bool:        
-        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 5
 
-class ConsumeInteractable(Interactable):
+
+class ItemInteraction(Interactable):
     parent: Item
+    
+    def check_player_activable(self) -> bool:
+        return self.engine.player.distance(self.parent.x,self.parent.y) < 2
 
-    # def get_action(self, consumer: Interactor) -> Optional[ActionOrHandler]:
-    #     """Try to return the action for this item."""
-    #     return actions.ItemAction(consumer, self.parent)
+      
+class ConsumeInteractable(ItemInteraction):
+
     
     def consume(self) -> None:
         """Remove the consumed item from its containing inventory or map."""
@@ -111,9 +130,7 @@ class ConsumeInteractable(Interactable):
             #This is in current map
             self.engine.game_map.entities.remove(entity)
             
-    def check_player_activable(self) -> bool:
-        return self.engine.player.distance(self.parent.x,self.parent.y) < 2
-
+    
 
 class EatInteraction(ConsumeInteractable):
     name = "EAT"
@@ -135,30 +152,59 @@ class EatInteraction(ConsumeInteractable):
             raise Impossible(f"Your health is already full.")
         
 
-class PickUpInteractable(Interactable):
-    parent: Item
-    name = "PICK UP"
 
-    def check_player_activable(self) -> bool:
-        return self.engine.player.distance(self.parent.x,self.parent.y) < 2
+
+class PickUpInteractable(ItemInteraction):
+
+    name = "PICK UP"
     
     def activate(self, action: actions.InteractiveAction) -> None:
-        inventory = action.entity.inventory
-        if len(inventory.items) >= inventory.capacity:
-                    raise exceptions.Impossible("Your inventory is full.")
-        self.engine.game_map.entities.remove(self.parent)
-        self.parent.parent = action.entity.inventory
-        inventory.items.append(self.parent)
+
+        action.entity.inventory.add(self.parent)
         self.engine.message_log.add_message(f"You picked up the {self.parent.name}!")
 
 
-class DropInteractable(Interactable):
-    parent: Item
+
+class DropInteractable(ItemInteraction):
     name = "DROP"
     def activate(self, action: actions.InteractiveAction) -> None:
         action.entity.inventory.drop(self.parent)
+        self.engine.message_log.add_message(f"You dropped the {self.parent.name}.")
 
+class EquipInteractable(ItemInteraction):
+    name = "EQUIP"
+    parent : Equipable
+    
 
+    
+    def activate(self, action: actions.InteractiveAction) -> None:
+        """tries to equip the item, if it is in the ground, add to the inventory first, if full, you cant equip it"""
+        item = self.parent
+        equipment = action.entity.equipment
+
+        if not item.inInventory:
+            inventory = action.entity.inventory
+            inventory.add(item)            
+        
+        equipment.equip(item)
+        self.engine.message_log.add_message(f"You equip the {item.name}!")
+        
+class UnequipInteractable(ItemInteraction):
+    name = "UNEQUIP"
+    parent : Equipable
+    
+    def activate(self, action: actions.InteractiveAction) -> None:
+        """tries to equip the item, if it is in the ground, add to the inventory first, if full, you cant equip it"""
+        item = self.parent
+        equipment = action.entity.equipment
+
+        if not item.inInventory:
+            raise Impossible("How did you manage to unequip an object in the ground???")            
+        
+        equipment.unequip(item.eq_type)
+        self.engine.message_log.add_message(f"You unequip the {item.name}!")
+        
+        
 class scrollCastInteractable(ConsumeInteractable):
     name = "CAST"
         

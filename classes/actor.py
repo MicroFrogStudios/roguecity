@@ -8,8 +8,9 @@ from enums.render_order import RenderOrder
 import enums.color as ecolor
 if TYPE_CHECKING:
     from components.ai import BaseAI
-    from components.fighter_component import Fighter, Level
-    from components.inventory_component import Inventory
+    from components.fighter_component import Fighter
+
+from components.inventory_component import Inventory, Equipment
     
 from components.interactor_component import Interactor
 
@@ -61,6 +62,8 @@ class Actor(Entity):
         self.inventory = inventory
         self.inventory.parent = self
 
+        self.equipment = Equipment()
+        self.equipment.parent= self
 
         self.interactor = Interactor()
         self.interactor.parent = self
