@@ -16,16 +16,18 @@ from actions import (
     
 )
 
+
 from components.ai import  PlayerInteract, PlayerPathing
 import enums.color as color
 import exceptions
-from interface.navigable_menu import InventoryMenu, TabContainer
+from interface.navigable_menu import Container, InventoryMenu, TabContainer
 from interface.panels import MapContextPanel
 from player_controller import PlayerController
 
 if TYPE_CHECKING:
     from engine import Engine
     from classes.item import Item
+    from classes.entity import Entity
     
 MOVE_KEYS = {
     # Arrow keys.
@@ -195,8 +197,8 @@ class MainGameEventHandler(EventHandler):
         elif key == tcod.event.KeySym.e:
             contextEntity = self.engine.game_map.closest_visible_entity()
             if contextEntity:
-                self.engine.entities =[contextEntity]            
-                return SelectedEntityHandler(self.engine)
+                MapContextPanel.set_entities([contextEntity],self.engine)
+                return SelectedEntityHandler(self.engine,[contextEntity])
             self.engine.message_log.add_message("You see nothing interesting",color.impossible)
         
         elif key == tcod.event.KeySym.l: # maybe keep for accesibility
@@ -219,8 +221,7 @@ class MainGameEventHandler(EventHandler):
         entities = self.engine.check_visible_entities_on_mouse()
         
         if entities and event.button == 1:
-            self.engine.entities = entities
-            return SelectedEntityHandler(self.engine)
+            return SelectedEntityHandler(self.engine,entities)
         elif event.button == 3:
             x,y = self.engine.camera_to_map_coordinates(event.tile.x, event.tile.y)
             if self.engine.game_map.visible[x,y] and self.engine.game_map.tiles[x,y]['walkable']:
@@ -349,23 +350,34 @@ class AskUserEventHandler(EventHandler):
 
 class SelectedEntityHandler(AskUserEventHandler):
     
+    def __init__(self, engine: actions.Engine,entities : list[Entity]):
+        super().__init__(engine)
+        MapContextPanel.entities = entities
+        
+    
+    def ev_mousemotion(self, event: tcod.event.MouseMotion) -> None:
+        super().ev_mousemotion(event)
+        for cursor, button in MapContextPanel.container.menu_buttons():
+             if button.hovering(self.engine):
+                 MapContextPanel.container.current_tab.has_focus=False
+                 MapContextPanel.container.set_cursor(*cursor)
+                 print("hovering")
+                 return
+    
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
         """By default any mouse click exits this input handler."""
         
-        for b in MapContextPanel.buttons:
-            if b.hovering(self.engine) and b.on_click is not None and event.button == 1:
-                self.engine.entities = None
-                return b.on_click()
-                
-        if event.button == 3:
-            self.engine.entities = None
-            return self.on_exit()
+        for c, b in MapContextPanel.container.menu_buttons():
+            if b.hovering(self.engine) and event.button == 1:
+                return MapContextPanel.container.on_confirm()
+            if event.button == 3:
+                return super().ev_mousebuttondown(event)
     
     def on_render(self, console: Console) -> None:
 
         super().on_render(console)
         
-        MapContextPanel.render(console=console, engine=self.engine)
+        MapContextPanel.render(console=console, engine=self.engine,selected=True)
          
     def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[ActionOrHandler]:
         """By default any key exits this input handler."""
@@ -383,7 +395,14 @@ class SelectedEntityHandler(AskUserEventHandler):
         if key == tcod.event.KeySym.ESCAPE:
             return MainGameEventHandler(self.engine)
         elif key in MOVE_KEYS:
-            pass## when refactored to navigable menus, will control the cursor
+            MapContextPanel.container.current_tab.has_focus=True
+            dx, dy = MOVE_KEYS[key]
+            MapContextPanel.container.navigate(dx,dy)
+        elif key in CONFIRM_KEYS:
+            return MapContextPanel.container.on_confirm()
+        elif key == tcod.event.KeySym.TAB:
+            MapContextPanel.container.navigate(0,0,1)
+        
         elif key == tcod.event.KeySym.g:
             if hasattr(self.engine.entities[0],"pickUpInteractable"):
                 item :Item = self.engine.entities[0]
@@ -394,17 +413,49 @@ class SelectedEntityHandler(AskUserEventHandler):
             
             
         
-        self.engine.entities = None
-        return self.on_exit()
+        
+    
+    
+
+class NavigableMenuHandler(AskUserEventHandler):
+    """This might not be used ever"""
+    def __init__(self, engine: actions.Engine,rootMenu :Container):
+        super().__init__(engine)
+        self.rootMenu = rootMenu
+
+    def on_render(self, console: Console) -> None:
+        super().on_render(console)
+        self.rootMenu.render(console,self.engine)
+    
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Action | BaseEventHandler | None:
+        key = event.sym
+        if key == tcod.event.KeySym.ESCAPE: # go back
+            return MainGameEventHandler(self.engine)
+        elif key in MOVE_KEYS:
+            dx, dy = MOVE_KEYS[key]
+            self.rootMenu.navigate(dx,dy)
+            
+        elif key in CONFIRM_KEYS:
+            return self.rootMenu.on_confirm()
+
+    def ev_mousemotion(self, event: tcod.event.MouseMotion) -> None:
+        super().ev_mousemotion(event)
+        for cursor, button in self.rootMenu.menu_buttons():
+             if button.hovering(self.engine):
+                 self.rootMenu.set_cursor(*cursor)
+                 return
+
+
+
 
 class InventoryMenuHandler(AskUserEventHandler):
     "Handler that shows inventory interface and switches controls to inventory navigation"
-    
+        
     def __init__(self, engine: actions.Engine):
         super().__init__(engine)
         inventoryMenu = InventoryMenu(engine.player.inventory)
-        from interface.navigable_menu import BaseMenu
-        dummyTab = BaseMenu([],"SETTINGS")
+        from interface.navigable_menu import ScrollingMenu
+        dummyTab = ScrollingMenu([],"SETTINGS")
         self.rootMenu = TabContainer(tabs=[inventoryMenu,dummyTab],x=0,y=0,width=80,height=40)
         
     def on_render(self, console: Console) -> None:
@@ -430,7 +481,7 @@ class InventoryMenuHandler(AskUserEventHandler):
         """By default any mouse click exits this input handler."""
 
         """Left click confirms a selection."""
-        print(event.button)
+        
         for c, b in self.rootMenu.current_tab.menu_buttons():
             if b.hovering(self.engine) and event.button == 1:
                 return self.rootMenu.on_confirm()
@@ -662,8 +713,8 @@ class CharacterScreenEventHandler(AskUserEventHandler):
         )
 
         console.print(
-            x=x + 1, y=y + 4, string=f"Attack: {self.engine.player.fighter.power}"
+            x=x + 1, y=y + 4, string=f"Attack: {self.engine.player.fighter.power} + ({self.engine.player.fighter.power_bonus})"
         )
         console.print(
-            x=x + 1, y=y + 5, string=f"Defense: {self.engine.player.fighter.defense}"
+            x=x + 1, y=y + 5, string=f"Defense: {self.engine.player.fighter.defense} + ({self.engine.player.fighter.defense_bonus})"
         )

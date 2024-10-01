@@ -35,7 +35,7 @@ class Engine:
         self.camera_height = config.screen_height -10
         self.camera_x_offset = 0
         (self.x_left_ref,self.x_right_ref, self.y_left_ref, self.y_right_ref) = (0,0,self.camera_width,self.camera_height)
-        self.entities = None
+        self.entities = None #TODO borrar cuando se vuelva obsoleto
         self.player_controller : PlayerController = PlayerController.get_instance(self.player)
 
     def handle_enemy_turns(self) -> None:

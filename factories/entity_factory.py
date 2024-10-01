@@ -1,4 +1,5 @@
 
+from actions import MeleeAction
 from classes.actor import Actor
 from classes.item import Item, Equipable
 from components import ai
@@ -20,16 +21,16 @@ player = Actor(
     actor_type=Actor.Type.PLAYER
 )
 old_man = Actor(
-    char="☺",
-    color=(0,0,100),
+    char="☻",
+    color=(0,0,120),
     name="ragged old man",
-    description= "Long beard, blinded eyes, with midnight blue robes, wandering the tunnels. Maybe he can help",
+    description= "Long beard, covered eyes, with midnight blue robes, wandering the tunnels. Maybe he can help",
     hostile=False,
     actor_type=Actor.Type.NPC,
     ai_cls=ai.IdleNeutral,
     interactables=[interactables.TalkInteraction(dialogue_factory.old_man_dialogue),interactables.AssaultInteraction()],
     icon= "assets/sprites/magito_azul.png",
-    fighter=Fighter(hp=15, defense=0, power=1,magic=10),
+    fighter=Fighter(hp=999, defense=0, power=1,magic=10),
     inventory=Inventory(capacity=1),
     )
 
@@ -65,7 +66,7 @@ food = Item(
     color=(153, 0, 0),
     name="food",
     icon="assets/sprites/meat.png",
-    interactables=[interactables.EatInteraction(4) ],
+    interactables=[interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4) ],
     description= "Heals you a certain amount"
     
 
@@ -104,11 +105,49 @@ mystery_egg = Item(
     
 )
 
+from components.inventory_component import Equipment as eq
+
 broken_sword = Equipable(
     char="/",
     color=color.gray,
     name="Broken sword",
     description="Dull sword missing its tip.",
-    eq_type="weapon",
+    eq_type=eq.Type.WEAPON,
+    power_bonus=1,
+    icon="assets/sprites/broken_sword.png",
 )
+
+worn_outfit = Equipable(
+    char="[",
+    color=color.gray,
+    name="worn outfit",
+    description="It has some holes but it covers you mostly.",
+    eq_type=eq.Type.ARMOR,
+    defense_bonus=1,
+    icon="assets/sprites/basic cloak.png"
+    
+)
+
+amulet_health = Equipable(
+    
+    char="δ",
+    color=color.white,
+    name="Amulet of vitality",
+    description="You can feel yourself healthier",
+    eq_type=eq.Type.AMULET,
+    hp_bonus=5,
+    icon="assets/sprites/heart_amulet.png"
+)
+
+wooden_staff = Equipable(
+    char="⌠",
+    color=color.gray,
+    name="Wooden staff",
+    description="A simple wooden staff",
+    eq_type=eq.Type.STAFF,
+    magic_bonus=1,
+    icon="assets/sprites/simple_staff.png"
+)
+
+
 

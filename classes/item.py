@@ -68,8 +68,8 @@ class Equipable(Item):
                  description: str = "<Missing Description>",
                  icon: str = "assets/sprites/red_egg.png",
                  interactables: list[Interactable] = [],
-                 eq_type : Equipment.eq_type,
-                 effect : Optional[Callable[[Action]]] = None,
+                 eq_type : Equipment.Type,
+                 effect : Optional[Callable[[Action,any]]] = None,
                  hp_bonus = 0,
                  power_bonus = 0,
                  defense_bonus = 0,
@@ -111,5 +111,5 @@ class Equipable(Item):
     def has_effect(self):
         return self.effect is not None
     
-    def activate_effect(self,action : Action):
-        self.effect(action)
+    def activate_effect(self,action : Action, context_value=None):
+        self.effect(action,context_value)

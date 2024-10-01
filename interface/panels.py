@@ -11,6 +11,7 @@ from enums import color
 
 
 
+from interface.navigable_menu import MapContextContainer
 from interface.render_functions import render_bar, wrap
 from engine import Engine
 if TYPE_CHECKING:
@@ -72,54 +73,34 @@ class ContextPanel:
             else:
                 b.fg = color.button_color
             b.render(console,engine)
-            
-
-                
-
-
-class InventoryContextPanel(ContextPanel):
-    """ Context panel when viewing inventory"""
-    @classmethod
-    def render(cls, console: Console, engine: Engine,context_item: Item) -> None:
-        desc_wrap_list = list(wrap(context_item.description, 20))
-        from interface.button import Button
-        
-        frame_height = min(50,cls.desc_start_y+len(desc_wrap_list)+10)
-        console.draw_frame(x=cls.x_offset, y=0, width=cls.panel_width, height=frame_height,title=context_item.name,clear=True,fg=cls.fg,bg=color.black )
-        image = tcod.image.load(context_item.icon)[:, :, :3]
-        ## SEMI graphics must use 56*30 pixels resolution
-        console.draw_semigraphics(image,cls.x_offset+ 1,1)
-        if hasattr(context_item,"fighter"):
-            render_bar(console,context_item.fighter.hp,context_item.fighter.max_hp,26,cls.x_offset+2,17)
-        
-        y_offset = 0
-        for line in desc_wrap_list:
-            console.print(x=cls.x_offset+3, y=cls.desc_start_y + y_offset, string=line, fg=color.menu_text)
-            y_offset += 1
-
-
     
 class MapContextPanel(ContextPanel):
+    entities = None
+    container = None
     
     @classmethod
-    def render(cls, console: Console, engine: Engine) -> None:
+    def set_entities(cls,entities,engine):
+        cls.entities= entities
+        cls.container = MapContextContainer(entities,engine,0,0,cls.panel_width)
+            
+    @classmethod
+    def render(cls, console: Console, engine: Engine,selected=False) -> None:
         
         # checks if selected map entitity
-        if engine.entities:
-            entities = engine.entities
-            cls.fg = color.menu_selected
+        if selected:
+            cls.container.border_color = color.menu_selected
         else:
             entities = engine.check_visible_entities_on_mouse()
-            cls.fg = color.white
-        #for now just use the first
-        
-        # if hovering entity or selected, actual render
-        if entities:
-            top_entity = entities[0]
+            if entities:
+                cls.container = MapContextContainer(entities,engine,0,0,cls.panel_width)
+            else:
+                return
             
             # avoiding entity on map to render panel on opossing side
-            cls.x_offset = 90
-            if top_entity.x >= config.screen_width//2:
-                cls.x_offset = 0
+        cls.container.reposition(x= 90)
+        if cls.container.current_entity.x >= config.screen_width//2:
+            cls.container.reposition(x= 0)
+            
+        cls.container.render(console,engine)
                 
-            super().render(console,engine,top_entity)
+            

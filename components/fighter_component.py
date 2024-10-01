@@ -13,7 +13,7 @@ from components.base_component import BaseComponent
 class Fighter(BaseComponent):
     parent: Actor
     def __init__(self, hp: int, defense: int, power: int,magic:int):
-        self.max_hp = hp
+        self.base_max_hp = hp
         self._hp = hp
         self.defense = defense
         self.power = power
@@ -21,8 +21,12 @@ class Fighter(BaseComponent):
 
     @property
     def hp(self) -> int:
-        return self._hp
-
+        return self._hp 
+    
+    @property
+    def max_hp(self) -> int:
+        return self.base_max_hp + self.hp_bonus
+    
     def att_bonus(self,att):
         total_bonus = 0
         for e in self.parent.equipment.slots.values():
@@ -52,6 +56,19 @@ class Fighter(BaseComponent):
     @property
     def weapon(self):
         return self.parent.equipment.weapon
+    
+    @property
+    def armor(self):
+        return self.parent.equipment.armor
+    
+    @property
+    def amulet(self):
+        return self.parent.equipment.amulet
+    
+    @property
+    def staff(self):
+        return self.parent.equipment.staff
+    
     @hp.setter
     def hp(self, value: int) -> None:
         self._hp = max(0, min(value, self.max_hp))
@@ -98,11 +115,24 @@ class Fighter(BaseComponent):
     def calc_damage(self,enemy :Fighter):
         return self.power + self.power_bonus - enemy.defense - enemy.defense_bonus
     
-    def melee_special_effect(self, action :Action):
+    def weapon_special_effect(self, action :Action, damage:int):
         
         if self.weapon and self.weapon.has_effect():
-            self.weapon.activate_effect()
+            damage = self.weapon.activate_effect(action,damage)
+        return damage
+            
+    def armor_special_effect(self,action :Action, damage:int):
+        if self.armor and self.armor.has_effect():
+            damage = self.armor.activate_effect(action,damage)
+        return damage
+       
+    def amulet_special_effect(self):
+        if self.amulet and self.amulet.has_effect():
+            self.amulet.activate_effect(None)
         
+    def staff_special_effect(self,action):
+        if self.staff and self.staff.has_effect():
+            self.staff.activate_effect(action)
         
         
 

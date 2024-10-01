@@ -67,6 +67,9 @@ class TalkInteraction(ActorInteraction):
     def __init__(self, dialogue :Dialogue) -> None:
         self.dialogue = dialogue
     
+    def check_player_activable(self) -> bool:
+        return super().check_player_activable() and not self.parent.hostile
+
     
     def activate(self, action: actions.InteractiveAction) -> None:
         

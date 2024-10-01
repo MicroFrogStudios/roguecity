@@ -39,34 +39,34 @@ class Inventory(BaseComponent):
         
         
 class Equipment(BaseComponent):
-    class eq_type(Enum):
-        BODY = "body"
+    class Type(Enum):
+        ARMOR = "armor"
         WEAPON = "weapon" 
         AMULET = "amulet"
         STAFF = "staff" 
     def __init__(self) -> None:
-        self.slots : dict[self.eq_type,Optional[Equipable]]= {
-            self.eq_type.BODY: None,
-            self.eq_type.WEAPON : None,
-            self.eq_type.AMULET : None,
-            self.eq_type.STAFF: None
+        self.slots : dict[self.Type,Optional[Equipable]]= {
+            Equipment.Type.ARMOR: None,
+            Equipment.Type.WEAPON : None,
+            Equipment.Type.AMULET : None,
+            Equipment.Type.STAFF: None
         }
 
     @property
-    def body(self):
-        return self.slots[self.eq_type.BODY]
+    def armor(self):
+        return self.slots[self.Type.ARMOR]
     
     @property
     def weapon(self):
-        return self.slots[self.eq_type.WEAPON]
+        return self.slots[self.Type.WEAPON]
     
     @property
     def amulet(self):
-        return self.slots[self.eq_type.AMULET]
+        return self.slots[self.Type.AMULET]
     
     @property
     def staff(self):
-        return self.slots[self.eq_type.STAFF]
+        return self.slots[self.Type.STAFF]
         
     def equip(self,item : Equipable):
         """put item in slot, retag the other maybe"""
@@ -77,7 +77,7 @@ class Equipment(BaseComponent):
         item.equipped = True
         self.slots[item.eq_type] = item
         
-    def unequip(self, slot: Equipment.eq_type):
+    def unequip(self, slot: Equipment.Type):
         self.slots[slot].equipped = False
         self.slots[slot] = None
             
