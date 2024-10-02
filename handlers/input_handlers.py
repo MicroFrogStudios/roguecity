@@ -359,7 +359,7 @@ class SelectedEntityHandler(AskUserEventHandler):
         super().ev_mousemotion(event)
         for cursor, button in MapContextPanel.container.menu_buttons():
              if button.hovering(self.engine):
-                 MapContextPanel.container.current_tab.has_focus=False
+                 MapContextPanel.container.current_tab.has_focus=True
                  MapContextPanel.container.set_cursor(*cursor)
                  print("hovering")
                  return
@@ -404,8 +404,8 @@ class SelectedEntityHandler(AskUserEventHandler):
             MapContextPanel.container.navigate(0,0,1)
         
         elif key == tcod.event.KeySym.g:
-            if hasattr(self.engine.entities[0],"pickUpInteractable"):
-                item :Item = self.engine.entities[0]
+            if hasattr(MapContextPanel.entities[MapContextPanel.container.tab_cursor],"pickUpInteractable"):
+                item :Item = MapContextPanel.entities[MapContextPanel.container.tab_cursor]
                 from components.interactable_component import PickUpInteractable 
                 if item.pickUpInteractable.check_player_activable():
                     self.engine.entities = None

@@ -172,8 +172,17 @@ class ContextPanelMenu(BaseMenu):
         if self.navigable:
             return self.buttons.set_cursor(x, y)
         
-
-
+    def reposition(self, x=None, y=None, width=None, height=None):
+        super().reposition(x, y, width)
+        height = 1
+        previous_menus_height = 0
+        for sub in self.submenus:
+            sub.reposition(x=self.x+self.padding,y=self.y+previous_menus_height+self.padding,width=self.width-self.padding*2)
+            height+= sub.height + self.padding
+            previous_menus_height += sub.height + self.padding
+        
+        super().reposition(height=height)
+                
 class MapContextContainer(Container):
     def __init__(self, entities, engine, x=0, y=0, width=config.screen_width, height=config.screen_height) -> None:
         super().__init__(x,y,width,height)
@@ -183,6 +192,7 @@ class MapContextContainer(Container):
         self.current_tab : ContextPanelMenu = ContextPanelMenu(self.x,self.y+3,self.width,self.entities[self.tab_cursor],engine,navigable=True,parent=self)
         self.height = self.current_tab.height+3
         self.border_color = color.white
+    
     def navigate(self, dx, dy,dz=0):
         if dz != 0:
             self.tab_cursor += dz
@@ -220,6 +230,10 @@ class MapContextContainer(Container):
         
     def menu_buttons(self) -> list[tuple[tuple[int, int], Button]]:
         return self.current_tab.menu_buttons()
+    
+    def reposition(self, x=None, y=None, width=None, height=None):
+        super().reposition(x, y, width, height)
+        self.current_tab.reposition(x,y,width,height)
         
 class ScrollingMenu(BaseMenu):
     def __init__(self, submenus, name,padding = 0, submenu_height=1) -> None:
@@ -395,7 +409,7 @@ class ButtonMatrix(SubMenu):
     def render(self, console: Console, engine: Engine) -> None:
         for i,row in enumerate(self.buttons):
             for j,b in enumerate(row):
-                if  j == self.cursor_x and i == self.cursor_y:
+                if  j == self.cursor_x and i == self.cursor_y and self.parent.has_focus:
                     b.fg = color.button_hover
                 else:
                     b.fg = color.button_color
