@@ -48,6 +48,11 @@ class GameWorld:
 
         self.current_floor = current_floor
 
+    
+    def tutorial_map(self):
+        from map.gen.dungeon import generate_tutorial
+        self.engine.game_map = generate_tutorial(self.engine)
+    
     def test_world(self) -> None:
         self.engine.game_map = GameMap(self.engine, self.map_width, self.map_height, entities=[self.engine.player])
         from map.gen.rooms import RectangularRoom

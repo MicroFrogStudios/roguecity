@@ -61,12 +61,12 @@ class Container:
         raise NotImplementedError()
 
 class TabContainer(Container):
-    def __init__(self,tabs, x = 0, y = 0, width = config.screen_width ,height = config.screen_height) -> None:
+    def __init__(self,tabs, x = 0, y = 0, width = config.screen_width ,height = config.screen_height,tab_cursor = 0) -> None:
         super().__init__(x,y,width,height)
         self.tabs: list[BaseMenu] = tabs
         for tab in self.tabs:
             tab.parent = self
-        self.tab_cursor = 0
+        self.tab_cursor = tab_cursor
         
     def render(self,console: Console, engine: Engine):
         console.draw_frame(self.x,self.y,self.width,self.height,bg=color.black,clear=True)
@@ -114,7 +114,40 @@ class BaseMenu(Container):
     def menu_buttons(self)-> list[tuple[tuple[int,int],Button]]:
         raise NotImplementedError()
     
+
+class HistoryViewer(BaseMenu):
     
+    def __init__(self, name,engine : Engine, padding=3, parent=None, x=0, y=0, width=0, height=0):
+        super().__init__(name, None, padding, parent, x, y, width, height)
+        self.log_length = len(engine.message_log.messages)
+        self.cursor = self.log_length - 1
+    
+    def navigate(self, dx, dy):
+        self.cursor += dy
+        self.cursor %= self.log_length
+    
+    def menu_buttons(self):
+        return []
+    def render(self, console, engine):
+        
+        log_console = tcod.console.Console(self.width - 2**self.padding, self.height - 4)
+
+        # Draw a frame with a custom banner title.
+        # log_console.draw_frame(self.x, self.y, log_console.width, log_console.height)
+        # log_console.print_box(
+        #     0, 0, log_console.width, 1, "┤Message history├", alignment=tcod.libtcodpy.CENTER
+        # )
+
+        # Render the message log using the cursor parameter.
+        engine.message_log.render_messages(
+            log_console,
+            self.x+self.padding,
+            self.y+2,
+            log_console.width - 2,
+            log_console.height - 2,
+            engine.message_log.messages[: self.cursor + 1],
+        )
+        log_console.blit(console, 3, 3)
     
 class ContextPanelMenu(BaseMenu):
 
@@ -198,7 +231,7 @@ class MapContextContainer(Container):
             self.tab_cursor += dz
             self.tab_cursor %= len(self.entities)
             self.current_tab = ContextPanelMenu(self.x,self.y+3,self.width,self.entities[self.tab_cursor],self.engine,navigable=True,parent=self)
-    
+            self.height = self.current_tab.height+3
         self.current_tab.navigate(dx,dy)
         
     @property
@@ -241,8 +274,10 @@ class ScrollingMenu(BaseMenu):
         self.submenu_height = submenu_height
         
     def navigate(self,dx,dy):
-        self.submenu_cursor += dy
-        self.submenu_cursor %= len(self.submenus) 
+        
+        if len(self.submenus) > 0:
+            self.submenu_cursor += dy
+            self.submenu_cursor %= len(self.submenus) 
     
     def set_cursor(self,x,y):
         self.submenu_cursor = y
@@ -265,7 +300,7 @@ class ScrollingMenu(BaseMenu):
             sub.render(console,engine)
             
 
-
+@DeprecationWarning
 class StatusMenu(BaseMenu):
     """hp, power,defense, magic, equipped stuff"""
     def __init__(self, entity :Entity, name) -> None:
@@ -287,7 +322,8 @@ class InventoryMenu(ScrollingMenu):
         
     def navigate(self, dx, dy):
         super().navigate(dx, dy)
-        self.submenus[self.submenu_cursor].navigate(dx)
+        if len(self.submenus) > 0:
+            self.submenus[self.submenu_cursor].navigate(dx)
         
     def set_cursor(self, x, y):
         super().set_cursor(x, y)
@@ -322,7 +358,30 @@ class InventoryMenu(ScrollingMenu):
         return self.submenus[self.submenu_cursor].on_confirm()
 
                 
+class OptionsMenu(ScrollingMenu):
+    
+    def __init__(self, name, optionTuples : list[tuple[str,function]], padding=0, submenu_height=3):
+        submenus : list[SingleOptionSubMenu] = []
+        for cont,fun in optionTuples:
+            submenus.append(SingleOptionSubMenu(self,cont,fun))
             
+        super().__init__(submenus, name, padding, submenu_height)
+ 
+    def menu_buttons(self):
+        return [((0,i),s.button) for i, s in enumerate(self.submenus)]
+    
+    def render(self, console, engine):
+        for i, sub in enumerate(self.submenus_visible):
+            width = self.parent.width - self.padding*2
+            height = self.submenu_height
+            x = self.parent.x + width//2
+            y = self.parent.y + 4 + self.submenu_height*i
+            
+            sub.reposition(x,y)
+            sub.render(console,engine, self.submenu_cursor == i)
+            
+    def on_confirm(self):
+        return self.submenus[self.submenu_cursor].on_confirm()
 
 ## menus contains submenus, submenus can be
 #  an entity with their interactables(that can be clicked or navigated)
@@ -550,13 +609,21 @@ class SingleOptionSubMenu(SubMenu):
 
     def __init__(self,parent : BaseMenu, content : str, onSelected :function) -> None:
         super().__init__(parent)
-        self.button = Button(0,0,content)
+        self.button = Button(self.x,self.y,content,on_click=onSelected,decoration="         ")
         self.onSelected = onSelected
 
-    def render(self,console: Console, engine: Engine) -> None:
+    def render(self, console, engine, selected=False):
+        self.button.x = self.x
+        self.button.y = self.y
+        if selected:
+            self.button.text_color = color.button_hover
+        else:
+            self.button.text_color = color.button_text
         self.button.render(console,engine)
         
         
+    def on_confirm(self):
+        return self.onSelected()
 
 class MultiOptionSubMenu(SubMenu):
     cursor = 0

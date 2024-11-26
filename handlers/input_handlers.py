@@ -60,6 +60,7 @@ WAIT_KEYS = {
 CONFIRM_KEYS = {
     tcod.event.KeySym.RETURN,
     tcod.event.KeySym.KP_ENTER,
+    tcod.event.KeySym.e
 }
 
 ActionOrHandler = Union[Action, "BaseEventHandler"]
@@ -193,8 +194,8 @@ class MainGameEventHandler(EventHandler):
             action = WaitAction(player)
 
         elif key == tcod.event.KeySym.i: # hot key to big menu
-            return InventoryMenuHandler(self.engine)
-        elif key == tcod.event.KeySym.e:
+            return TabMenuHandler(self.engine,1)
+        elif key == tcod.event.KeySym.q:
             contextEntity = self.engine.game_map.closest_visible_entity()
             if contextEntity:
                 MapContextPanel.set_entities([contextEntity],self.engine)
@@ -204,7 +205,7 @@ class MainGameEventHandler(EventHandler):
         elif key == tcod.event.KeySym.l: # maybe keep for accesibility
             return LookHandler(self.engine)
         elif key == tcod.event.KeySym.ESCAPE: # big menu instead of instquit
-            return InventoryMenuHandler(self.engine)
+            return TabMenuHandler(self.engine)
             # raise SystemExit()
         elif key == tcod.event.KeySym.c:# hot key to big menu
             return CharacterScreenEventHandler(self.engine)
@@ -392,7 +393,7 @@ class SelectedEntityHandler(AskUserEventHandler):
             return None
         
         key = event.sym
-        if key == tcod.event.KeySym.ESCAPE:
+        if key == tcod.event.KeySym.ESCAPE or key == tcod.event.KeySym.q:
             return MainGameEventHandler(self.engine)
         elif key in MOVE_KEYS:
             MapContextPanel.container.current_tab.has_focus=True
@@ -448,15 +449,17 @@ class NavigableMenuHandler(AskUserEventHandler):
 
 
 
-class InventoryMenuHandler(AskUserEventHandler):
-    "Handler that shows inventory interface and switches controls to inventory navigation"
+class TabMenuHandler(AskUserEventHandler):
+    "Handler that shows menu interface and switches controls to menu navigation"
         
-    def __init__(self, engine: actions.Engine):
+    def __init__(self, engine: actions.Engine,cursor = 0):
         super().__init__(engine)
         inventoryMenu = InventoryMenu(engine.player.inventory)
-        from interface.navigable_menu import ScrollingMenu
-        dummyTab = ScrollingMenu([],"SETTINGS")
-        self.rootMenu = TabContainer(tabs=[inventoryMenu,dummyTab],x=0,y=0,width=80,height=40)
+        from interface.navigable_menu import OptionsMenu, HistoryViewer
+        optionsTab = OptionsMenu("OPTIONS",[("continue",lambda: MainGameEventHandler(self.engine)),
+                                            ("exit",lambda: self.ev_quit(None))])
+        logTab = HistoryViewer("LOG",engine,x=0,y=0,width=80,height=40)
+        self.rootMenu = TabContainer(tabs=[optionsTab,inventoryMenu,logTab],x=0,y=0,width=80,height=40,tab_cursor=cursor)
         
     def on_render(self, console: Console) -> None:
         super().on_render(console)

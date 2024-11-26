@@ -32,12 +32,19 @@ class RectangularRoom:
         )
 
 
-class DoubleRoom:
-    def __init__(self, roomOne: RectangularRoom, roomTwo: RectangularRoom):
-
-        self.strokeOne = roomOne
-        self.strokeTwo = roomTwo
-
+class FurnishedRoom(RectangularRoom):
+    """
+    darle metodos a la habitacion para saber guardarse en un mapa,
+    y poder especificar el contenido del a haibtacion, como:
+    - mobiliario
+    - npcs
+    - puertas, estilo de tiling de suelo/pared
+    - triggers?
+    - items?
+    """
+    def __init__(self, x: int, y: int, width: int, height: int, door):
+        super().__init__(x, y, width, height)
+        
 
 def tunnel_between(
     start: Tuple[int, int], end: Tuple[int, int]
@@ -57,3 +64,5 @@ def tunnel_between(
         yield x, y
     for x, y in tcod.los.bresenham((corner_x, corner_y), (x2, y2)).tolist():
         yield x, y
+
+

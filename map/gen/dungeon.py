@@ -7,6 +7,22 @@ import factories.entity_factory as factory
 
 from engine import Engine
 
+
+
+def generate_tutorial(engine:Engine):
+    
+    player = engine.player
+    tutorial_map = GameMap(engine, 200, 200, entities=[player])
+    starting_room = RectangularRoom(100-6,200-9,12,8)
+    tutorial_map.tiles[starting_room.inner] = tiles.new_floor()
+    tutorial_map.tiles[100,200-9] = tiles.new_door()
+    second_room = RectangularRoom(100-8,200-23,16,14)
+    tutorial_map.tiles[second_room.inner] = tiles.new_floor()
+    player.place(*starting_room.center,tutorial_map)
+    
+    
+    return tutorial_map
+    
 def generate_dungeon(
     max_rooms: int,
     room_min_size: int,

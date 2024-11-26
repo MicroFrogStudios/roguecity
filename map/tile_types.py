@@ -49,6 +49,11 @@ def new_wall(r=130, g=110, b=50):
         light=(ord(" "), (255, 255, 255), (r, g, b)),
     )
 
+def new_door():
+    return new_tile(walkable=True, transparent=False,
+        dark=(ord("┼"), (0, 0, 100), (50, 50, 150)),
+        light=(ord("┼"), (130, 110, 50), (200, 180, 50)))
+
 down_stairs = new_tile(
     walkable=True,
     transparent=True,

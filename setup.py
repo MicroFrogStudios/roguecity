@@ -58,8 +58,8 @@ def new_game() -> Engine:
     return engine
 
 def test_game() -> Engine:
-    map_width = 150
-    map_height = 150
+    map_width = 200
+    map_height = 200
     player = copy.deepcopy(entity_factory.player)
     engine = Engine(player=player)
 
@@ -68,7 +68,7 @@ def test_game() -> Engine:
         map_width=map_width,
         map_height=map_height,
     )
-    engine.game_world.test_world()
+    engine.game_world.tutorial_map()
     engine.update_fov()    
     engine.message_log.add_message(
         "Hello and welcome, to the test chamber", color.welcome_text
