@@ -13,7 +13,7 @@ player = Actor(
     color=(255, 255, 255),
     name="Player",
     description= "This is you",
-    ai_cls=ai.IdleNeutral,
+    friendly_ai=ai.IdleNeutral(),
     fighter=Fighter(hp=10, defense=0, power=1,magic=1),
     inventory=Inventory(capacity=27),
     icon= "assets\sprites\magito_azul.png",
@@ -27,7 +27,8 @@ old_man = Actor(
     description= "Long beard, covered eyes, with midnight blue robes, wandering the tunnels. Maybe he can help",
     hostile=False,
     actor_type=Actor.Type.NPC,
-    ai_cls=ai.IdleNeutral,
+    friendly_ai=ai.IdleNeutral(),
+    hostile_ai= ai.HostileEnemy(),
     interactables=[interactables.TalkInteraction(dialogue_factory.old_man_dialogue),interactables.AssaultInteraction()],
     icon= "assets/sprites/magito_azul.png",
     fighter=Fighter(hp=999, defense=0, power=1,magic=10),
@@ -39,13 +40,14 @@ weak_skuly = Actor(
     color=(255, 255, 255),
     name="Lost skull",
     description= "Eerie skull walking on two legs. Harmless if left alone",
-    hostile=True,
+    hostile=False,
     actor_type=Actor.Type.MONSTER,
-    ai_cls=ai.HostileEnemy,
+    friendly_ai=ai.RandomGait(3),
+    hostile_ai=ai.HostileEnemy(),
     fighter=Fighter(hp=4, defense=0, power=1,magic=0),
     inventory=Inventory(capacity=0),
     icon= "assets\sprites\skuly.png",
-    interactables=[interactables.TauntInteraction()],
+    interactables=[interactables.AssaultInteraction(cry="Shrieeek!")],
 )
 rat_small = Actor(
     char="r",
@@ -54,10 +56,11 @@ rat_small = Actor(
     hostile=False,
     actor_type=Actor.Type.CRITTER,
     description="A small mammal looking for food",
-    ai_cls=ai.FollowNeutral,
-    fighter=Fighter(hp=1, defense=0, power=1,magic=0),
+    friendly_ai=ai.FollowNeutral(follow_distance=3),
+    hostile_ai= ai.HostileEnemy(),
+    fighter=Fighter(hp=3, defense=0, power=1,magic=0),
     inventory=Inventory(capacity=0),
-    interactables=[interactables.TauntInteraction()],
+    interactables=[interactables.TauntInteraction(response="= ò · ó ="),interactables.PetInteraction(response="= ^ · ^ =")],
     icon= "assets/sprites/raticuli.png",
 )
 
@@ -66,7 +69,7 @@ food = Item(
     color=(153, 0, 0),
     name="food",
     icon="assets/sprites/meat.png",
-    interactables=[interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4),interactables.EatInteraction(4) ],
+    interactables=[interactables.EatInteraction(4)],
     description= "Heals you a certain amount"
     
 

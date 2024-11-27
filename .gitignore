@@ -3,3 +3,6 @@ __pycache__/
 *.sav
 *.kra
 *~
+*.spec
+build/*
+dist/*

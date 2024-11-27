@@ -16,7 +16,12 @@ if TYPE_CHECKING:
 
 class BaseAI(Action):
 
+
     entity: Actor
+    
+    def __init__(self, entity = None):
+        super().__init__(entity)
+        
     def perform(self) -> None:
         raise NotImplementedError()
 
@@ -121,7 +126,7 @@ class PlayerPathing(PlayerAI):
         self.target = None
     
 class HostileEnemy(BaseAI):
-    def __init__(self, entity: Actor):
+    def __init__(self, entity: Actor=None):
         super().__init__(entity)
         self.path: List[Tuple[int, int]] = []
 
@@ -195,7 +200,7 @@ class IdleNeutral(BaseAI):
     
 class FollowNeutral(BaseAI):
     
-    def __init__(self, entity: Actor,target = None, follow_distance=3,):
+    def __init__(self, entity: Actor = None,target = None, follow_distance=3,):
         super().__init__(entity)
         self.target = target
         self.follow_distance = follow_distance
@@ -221,3 +226,42 @@ class FollowNeutral(BaseAI):
             ).perform()
         
         return WaitAction(self.entity).perform()
+    
+class RandomGait(BaseAI):
+    """
+   will move randomly with a given frequency
+    """
+
+    def __init__(
+        self,  turns_to_move: int,entity: Actor = None
+    ):
+        super().__init__(entity)
+        self.turns_to_move = turns_to_move
+        self.turn_counter = turns_to_move
+        
+        
+    def perform(self) -> None:
+        # Revert the AI back to the original state if the effect has run its course.
+        if self.turn_counter > 0:
+            self.turn_counter -= 1
+            
+        else:
+            # Pick a random direction
+            direction_x, direction_y = random.choice(
+                [
+                    (-1, -1),  # Northwest
+                    (0, -1),  # North
+                    (1, -1),  # Northeast
+                    (-1, 0),  # West
+                    (1, 0),  # East
+                    (-1, 1),  # Southwest
+                    (0, 1),  # South
+                    (1, 1),  # Southeast
+                ]
+            )
+
+            self.turn_counter = self.turns_to_move
+
+            # The actor will either try to move or attack in the chosen random direction.
+            # Its possible the actor will just bump into the wall, wasting a turn.
+            return BumpAction(self.entity, direction_x, direction_y,).perform()

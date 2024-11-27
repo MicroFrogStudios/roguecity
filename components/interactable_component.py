@@ -83,12 +83,12 @@ class AssaultInteraction(ActorInteraction):
         self.cry = cry
         
     def check_player_activable(self) -> bool:        
-        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) <= 1
+        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 2
 
     def activate(self, action: actions.InteractiveAction) -> None:
         
         target = action.target_actor
-        target.hostile = True
+        target.turn_hostile()
         (x,y) = action.target_xy
         dx = x - action.entity.x
         dy = y - action.entity.y
@@ -98,7 +98,9 @@ class AssaultInteraction(ActorInteraction):
 class TauntInteraction(ActorInteraction):
     
     name = "TAUNT"
-        
+    
+    def __init__(self, response = "...") -> None:
+        self.response = response
     def activate(self, action: actions.InteractiveAction) -> None:
         
         target = action.target_actor
@@ -111,7 +113,34 @@ class TauntInteraction(ActorInteraction):
              self.engine.message_log.add_message(
                 f"The {action.entity.name} taunts the {target.name}",
                 color.enemy_atk)
+             
+        self.engine.message_log.add_message(f"The {self.parent.name} says: {self.response}")
+      
+        target.turn_hostile()
 
+class PetInteraction(ActorInteraction):
+    
+    name = "PET"
+    def __init__(self, response = "<3") -> None:
+        self.response = response
+        
+    def activate(self, action: actions.InteractiveAction) -> None:
+        
+        target = action.target_actor
+        if action.entity is action.engine.player:
+            
+            self.engine.message_log.add_message(
+                f"you pet the {target.name}",
+                color.white)
+        else:
+             self.engine.message_log.add_message(
+                f"The {action.entity.name} pets the {target.name}",
+                color.white)
+        self.engine.message_log.add_message(f"The {self.parent.name} says: {self.response}")
+        target.turn_friendly()
+    
+    def check_player_activable(self):
+        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 2
 
 class ItemInteraction(Interactable):
     parent: Item

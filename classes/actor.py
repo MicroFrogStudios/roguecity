@@ -32,7 +32,8 @@ class Actor(Entity):
         color: Tuple[int, int, int] = ecolor.white,
         name: str = "<Unnamed>",
         description: str = "<Missing description>",
-        ai_cls: Type[BaseAI],
+        friendly_ai: BaseAI = None,
+        hostile_ai : BaseAI = None,
         fighter: Fighter,
         inventory: Inventory,
         hostile: bool,
@@ -53,9 +54,13 @@ class Actor(Entity):
             icon=icon,
             interactables=interactables
         )
-        if ai_cls:
-            self.ai: Optional[BaseAI] = ai_cls(self)
-
+        
+        if friendly_ai:
+            friendly_ai.entity = self
+            self.friendly_ai = friendly_ai
+        if hostile_ai:
+            hostile_ai.entity = self
+            self.hostile_ai = hostile_ai
         self.fighter = fighter
         self.fighter.parent = self
         
@@ -69,9 +74,22 @@ class Actor(Entity):
         self.interactor.parent = self
         
         self.hostile = hostile
+        
+        if self.hostile:
+            self.ai = self.hostile_ai
+        else:
+            self.ai = self.friendly_ai
         self.actor_type = actor_type
 
     @property
     def is_alive(self) -> bool:
         """Returns True as long as this actor can perform actions."""
         return bool(self.ai)
+        
+    def turn_hostile(self):
+        self.hostile = True
+        self.ai = self.hostile_ai
+        
+    def turn_friendly(self):
+        self.hostile=False
+        self.ai = self.friendly_ai
