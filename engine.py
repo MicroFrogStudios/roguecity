@@ -51,7 +51,7 @@ class Engine:
         
         self.update_camera_references()
         self.game_map.render(console)
-        self.message_log.render(console=console,x=21,y=45, width=40, height=5)
+        self.message_log.render(console=console,x=30,y=45, width=40, height=5)
         rend.hline(console,0,config.screen_height-9)
         rend.render_bar(
             console=console,
@@ -64,6 +64,12 @@ class Engine:
             dungeon_level=self.game_world.current_floor,
             location=(0, 47),
         )
+        rend.render_char_info(
+            console=console,
+            char = self.player,
+            location=(0, 48)
+        )
+        
         
         
     def check_visible_entities_on_mouse(self):

@@ -202,15 +202,15 @@ class MainGameEventHandler(EventHandler):
                 return SelectedEntityHandler(self.engine,[contextEntity])
             self.engine.message_log.add_message("You see nothing interesting",color.impossible)
         
-        elif key == tcod.event.KeySym.l: # maybe keep for accesibility
+        elif key == tcod.event.KeySym.l: # keep for accesibility
             return LookHandler(self.engine)
         elif key == tcod.event.KeySym.ESCAPE: # big menu instead of instquit
             return TabMenuHandler(self.engine)
             # raise SystemExit()
-        elif key == tcod.event.KeySym.c:# hot key to big menu
-            return CharacterScreenEventHandler(self.engine)
+        # elif key == tcod.event.KeySym.c:# showed left bottom
+        #     return CharacterScreenEventHandler(self.engine)
         elif key == tcod.event.KeySym.v:# hot key to big menu
-            return HistoryViewer(self.engine)
+            return TabMenuHandler(self.engine,2)
 
         # No valid key was pressed
         return action
@@ -268,8 +268,8 @@ CURSOR_Y_KEYS = {
     tcod.event.KeySym.PAGEDOWN: 10,
 }
 
-
-class HistoryViewer(EventHandler):
+@DeprecationWarning
+class HistoryViewerOld(EventHandler):
     """Print the history on a larger window which can be navigated."""
 
     def __init__(self, engine: Engine):
@@ -456,8 +456,10 @@ class TabMenuHandler(AskUserEventHandler):
         super().__init__(engine)
         inventoryMenu = InventoryMenu(engine.player.inventory)
         from interface.navigable_menu import OptionsMenu, HistoryViewer
-        optionsTab = OptionsMenu("OPTIONS",[("continue",lambda: MainGameEventHandler(self.engine)),
-                                            ("exit",lambda: self.ev_quit(None))])
+        optionsTab = OptionsMenu("OPTIONS",[("Continue",lambda: MainGameEventHandler(self.engine)),
+                                            ("Controls",lambda: ControlListHandler(self.engine)),
+                                            ("Save and exit",lambda: self.ev_quit(None))
+                                            ])
         logTab = HistoryViewer("LOG",engine,x=0,y=0,width=80,height=40)
         self.rootMenu = TabContainer(tabs=[optionsTab,inventoryMenu,logTab],x=0,y=0,width=80,height=40,tab_cursor=cursor)
         
@@ -490,6 +492,10 @@ class TabMenuHandler(AskUserEventHandler):
                 return self.rootMenu.on_confirm()
             if event.button == 3:
                 return super().ev_mousebuttondown(event)
+        
+        for b in self.rootMenu.tabButtons:
+            if b.hovering(self.engine) and event.button == 1:
+                b.on_click()
     
     def ev_mousewheel(self, event: tcod.event.MouseWheel) -> Action | BaseEventHandler | None:
         self.rootMenu.navigate(0,-event.y)
@@ -502,7 +508,9 @@ class TabMenuHandler(AskUserEventHandler):
              if button.hovering(self.engine):
                  self.rootMenu.current_tab.set_cursor(*cursor)
                  return
-    
+ 
+ 
+   
 class InventoryEventHandler(AskUserEventHandler):
     """This handler lets the user select an item.
 
@@ -687,8 +695,66 @@ class AreaRangedAttackHandler(SelectIndexHandler):
 
     def on_index_selected(self, x: int, y: int) -> Optional[ActionOrHandler]:
         return self.callback((x, y))
+
+
+class ControlListHandler(AskUserEventHandler):
+    TITLE = "Controls Info"   
     
-    
+    def on_render(self, console: tcod.console.Console) -> None:
+        super().on_render(console)
+
+        
+        x = 0
+
+        y = 0
+
+        width = len(self.TITLE) + 30
+
+        console.draw_frame(
+            x=x,
+            y=y,
+            width=width,
+            height=25,
+            title=self.TITLE,
+            clear=True,
+            fg=(255, 255, 255),
+            bg=(0, 0, 0),
+        )
+
+        console.print(
+            x=x + 1, y=y + 2, string="Bump into enemies to attack them"
+        )
+        
+        console.print(
+            x=x + 1, y=y + 4, string="left mouse click on objects to see info"
+        )
+        
+        console.print(
+            x=x + 1, y=y + 6, string="Move/Navigate: WASD, numpad or arrows"
+        )
+        console.print(
+            x=x + 1, y=y + 8, string="Move/interact also with mouse right click"
+        )
+        console.print(
+            x=x + 1, y=y + 10, string="Context menu: 'Q'"
+        )
+        
+        console.print(
+            x=x + 1, y=y + 12, string="Confirm: 'E' or RETURN or INTRO"
+        )
+        console.print(
+            x=x + 1, y=y + 14, string="Menu: 'ESC'"
+        )
+        console.print(
+            x=x + 1, y=y + 16, string="Inventory: 'I'"  
+        )
+        console.print(
+            x=x + 1, y=y + 18, string="Message log: 'V'"  
+        )
+        console.print(
+            x=x + 1, y=y + 20, string="Next tab: TAB"  
+        )
+            
 class CharacterScreenEventHandler(AskUserEventHandler):
     TITLE = "Character Information"
 

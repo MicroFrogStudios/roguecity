@@ -61,12 +61,17 @@ class Container:
         raise NotImplementedError()
 
 class TabContainer(Container):
-    def __init__(self,tabs, x = 0, y = 0, width = config.screen_width ,height = config.screen_height,tab_cursor = 0) -> None:
+    def __init__(self,tabs :list[BaseMenu], x = 0, y = 0, width = config.screen_width ,height = config.screen_height,tab_cursor = 0) -> None:
         super().__init__(x,y,width,height)
         self.tabs: list[BaseMenu] = tabs
-        for tab in self.tabs:
+        self.tabButtons: list[Button] = []
+        for i, tab in enumerate(self.tabs):
             tab.parent = self
+            tab_width = len(tab.name)+2
+            self.tabButtons.append(Button(x=self.x,y = self.y,height=3,width=tab_width,title=tab.name,on_click=lambda n=i: self.set_cursor(z=n))
+)
         self.tab_cursor = tab_cursor
+        
         
     def render(self,console: Console, engine: Engine):
         console.draw_frame(self.x,self.y,self.width,self.height,bg=color.black,clear=True)
@@ -74,14 +79,21 @@ class TabContainer(Container):
         for i, tab in enumerate(self.tabs):
             
             tab_width = len(tab.name)+2
+            self.tabButtons[i].x = self.x+ width_acc
+                
             if i == self.tab_cursor:
+                self.tabButtons[i].decoration = "┌─┐│ ││ │"
+                self.tabButtons[i].fg=color.white
                 console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width,decoration="┌─┐│ ││ │")
-                console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=tab.name,fg=color.button_text,alignment=libtcodpy.CENTER)
+                # console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=tab.name,fg=color.button_text,alignment=libtcodpy.CENTER)
                 tab.render(console,engine)
             else:
-                console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width)
-                console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=tab.name,alignment=libtcodpy.CENTER)
-            
+                # console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width)
+                # console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=tab.name,alignment=libtcodpy.CENTER)
+                self.tabButtons[i].decoration = "┌─┐│ │└─┘"
+                self.tabButtons[i].fg=color.button_color
+                
+            self.tabButtons[i].render(console,engine)
               
             width_acc += tab_width
               
@@ -92,11 +104,14 @@ class TabContainer(Container):
     def on_confirm(self):
         return self.current_tab.on_confirm()
     
-    def set_cursor(self,x,y):
-        self.current_tab.set_cursor(x,y)
+    def set_cursor(self,x=None,y=None,z=None):
+        if x is not None and y is not None:
+            self.current_tab.set_cursor(x,y)
+        if z is not None:
+            self.tab_cursor = z
         
     @property          
-    def current_tab(self):
+    def current_tab(self) -> BaseMenu:
         return self.tabs[self.tab_cursor]
 
 
@@ -652,7 +667,7 @@ class MultiOptionSubMenu(SubMenu):
             b.y = y
             
     def navigate(self,dx):
-        type(self).cursor += dx
+        type(self).cursor -= dx
         type(self).cursor %= len(self.buttons) 
         
     def set_cursor(self,x):
