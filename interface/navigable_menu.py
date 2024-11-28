@@ -284,8 +284,8 @@ class MapContextContainer(Container):
         self.current_tab.reposition(x,y,width,height)
         
 class ScrollingMenu(BaseMenu):
-    def __init__(self, submenus, name,padding = 0, submenu_height=1) -> None:
-        super().__init__(name,submenus,padding)        
+    def __init__(self, submenus, name,padding = 0, submenu_height=1,x=0,y=0,width=0,height=0) -> None:
+        super().__init__(name,submenus,padding,x=x,y=y,width=width,height=height)        
         self.submenu_height = submenu_height
         
     def navigate(self,dx,dy):
@@ -303,7 +303,11 @@ class ScrollingMenu(BaseMenu):
     
     @property
     def page_size(self):
-        return (self.parent.height-4)//self.submenu_height
+        if self.parent:
+            return (self.parent.height-4)//self.submenu_height
+        else:
+            return (self.height)//self.submenu_height
+        
         
     @property
     def current_page(self):
@@ -375,24 +379,30 @@ class InventoryMenu(ScrollingMenu):
                 
 class OptionsMenu(ScrollingMenu):
     
-    def __init__(self, name, optionTuples : list[tuple[str,function]], padding=0, submenu_height=3):
+    def __init__(self, name, optionTuples : list[tuple[str,function]], padding=0, submenu_height=3,x=0,y=0,height=0,width=0):
         submenus : list[SingleOptionSubMenu] = []
         for cont,fun in optionTuples:
             submenus.append(SingleOptionSubMenu(self,cont,fun))
             
-        super().__init__(submenus, name, padding, submenu_height)
+        super().__init__(submenus, name, padding, submenu_height,x=x,y=y,width=width,height=height)
  
-    def menu_buttons(self):
+    def menu_buttons(self) ->list[tuple[tuple[int,int],Button]]:
         return [((0,i),s.button) for i, s in enumerate(self.submenus)]
     
     def render(self, console, engine):
+        if self.parent:
+                width = self.parent.width - self.padding*2
+                self.x = self.parent.x + width//2
+        else:
+            console.draw_frame(x=self.x - self.width//2,y=self.y,height=self.height,width=self.width,bg=color.black,)
         for i, sub in enumerate(self.submenus_visible):
-            width = self.parent.width - self.padding*2
-            height = self.submenu_height
-            x = self.parent.x + width//2
-            y = self.parent.y + 4 + self.submenu_height*i
+            if self.parent:
+                y = self.parent.y + 4 + self.submenu_height*i
+            else:
+                y = self.y + 1 + self.submenu_height*i
             
-            sub.reposition(x,y)
+                
+            sub.reposition(self.x,y)
             sub.render(console,engine, self.submenu_cursor == i)
             
     def on_confirm(self):
@@ -624,11 +634,11 @@ class SingleOptionSubMenu(SubMenu):
 
     def __init__(self,parent : BaseMenu, content : str, onSelected :function) -> None:
         super().__init__(parent)
-        self.button = Button(self.x,self.y,content,on_click=onSelected,decoration="         ")
+        self.button = Button(self.x,self.y,content,on_click=onSelected,decoration="         ",width=len(content))
         self.onSelected = onSelected
 
     def render(self, console, engine, selected=False):
-        self.button.x = self.x
+        self.button.x = self.x -self.button.width//2
         self.button.y = self.y
         if selected:
             self.button.text_color = color.button_hover

@@ -15,7 +15,7 @@ class PlayerController:
         self.current_task : Optional[PlayerAI] = None
     
     def next(self) -> PlayerAI:
-        return self.aiList.pop()
+        return self.aiList.pop(0)
     
     def interrupt(self):
         self.current_task = None

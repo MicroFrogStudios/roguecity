@@ -18,6 +18,7 @@ from actions import (
 
 
 from components.ai import  PlayerInteract, PlayerPathing
+import config
 import enums.color as color
 import exceptions
 from interface.navigable_menu import Container, InventoryMenu, TabContainer
@@ -29,39 +30,11 @@ if TYPE_CHECKING:
     from classes.item import Item
     from classes.entity import Entity
     
-MOVE_KEYS = {
-    # Arrow keys.
-    tcod.event.KeySym.UP: (0, -1),
-    tcod.event.KeySym.DOWN: (0, 1),
-    tcod.event.KeySym.LEFT: (-1, 0),
-    tcod.event.KeySym.RIGHT: (1, 0),
-    #WASD Keys
-    tcod.event.KeySym.w: (0, -1),
-    tcod.event.KeySym.s: (0, 1),
-    tcod.event.KeySym.a: (-1, 0),
-    tcod.event.KeySym.d: (1, 0),
-    # Numpad keys.
-    tcod.event.KeySym.KP_1: (-1, 1),
-    tcod.event.KeySym.KP_2: (0, 1),
-    tcod.event.KeySym.KP_3: (1, 1),
-    tcod.event.KeySym.KP_4: (-1, 0),
-    tcod.event.KeySym.KP_6: (1, 0),
-    tcod.event.KeySym.KP_7: (-1, -1),
-    tcod.event.KeySym.KP_8: (0, -1),
-    tcod.event.KeySym.KP_9: (1, -1),
-}
+MOVE_KEYS = config.MOVE_KEYS
 
-WAIT_KEYS = {
-    tcod.event.KeySym.PERIOD,
-    tcod.event.KeySym.KP_5,
-    tcod.event.KeySym.CLEAR,
-}
+WAIT_KEYS = config.WAIT_KEYS
 
-CONFIRM_KEYS = {
-    tcod.event.KeySym.RETURN,
-    tcod.event.KeySym.KP_ENTER,
-    tcod.event.KeySym.e
-}
+CONFIRM_KEYS = config.CONFIRM_KEYS
 
 ActionOrHandler = Union[Action, "BaseEventHandler"]
 """An event handler return value which can trigger an action or switch active handlers.
@@ -225,7 +198,7 @@ class MainGameEventHandler(EventHandler):
             return SelectedEntityHandler(self.engine,entities)
         elif event.button == 3:
             x,y = self.engine.camera_to_map_coordinates(event.tile.x, event.tile.y)
-            if self.engine.game_map.visible[x,y] and self.engine.game_map.tiles[x,y]['walkable']:
+            if self.engine.game_map.explored[x,y] and self.engine.game_map.tiles[x,y]['walkable']:
                 if entities:
                     for e in entities:
                         self.engine.player.ai = PlayerInteract(self.engine.player,e)
