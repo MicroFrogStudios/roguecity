@@ -8,6 +8,9 @@ import components.interactable_component as interactables
 from enums import color
 from components.inventory_component import Inventory
 from factories import dialogue_factory
+
+# Actors
+
 player = Actor(
     char="@",
     color=(255, 255, 255),
@@ -63,6 +66,8 @@ rat_small = Actor(
     interactables=[interactables.TauntInteraction(response="= ò · ó ="),interactables.PetInteraction(response="= ^ · ^ =")],
     icon= "assets/sprites/raticuli.png",
 )
+
+# ITEMS
 
 food = Item(
     char="%",
@@ -153,4 +158,22 @@ wooden_staff = Equipable(
 )
 
 
+from classes.prop import Prop
 
+down_staircase = Prop(
+    char="▼",
+    color=color.gray,
+    name="Staircase",
+    description="It goes down",
+    icon="assets/sprites/basic cloak.png",
+    interactables=[interactables.DescendInteractable()]
+)
+
+up_staircase = Prop(
+    char="▲",
+    color=color.gray,
+    name="Staircase",
+    description="It goes up",
+    icon="assets/sprites/basic cloak.png",
+    interactables=[interactables.AscendInteractable()]
+)

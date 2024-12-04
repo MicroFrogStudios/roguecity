@@ -27,11 +27,11 @@ class GameWorld:
         map_width: int,
         map_height: int,
         max_rooms: int = 1,
-        room_min_size: int = 5,
-        room_max_size: int = 10,
+        room_min_size: int = 8,
+        room_max_size: int = 12,
         max_monsters_per_room: int = 1,
         max_items_per_room: int = 1,
-        current_floor: int = 0
+        current_floor: int = -5
     ):
         self.engine = engine
 
@@ -71,22 +71,37 @@ class GameWorld:
 
         
         return None
+    
+    def descend(self) -> None:
+        self.current_floor -= 1
+        self.generate_floor(False)
 
-    def generate_floor(self) -> None:
-        from map.gen.dungeon import generate_dungeon
-
+    def ascend(self) -> None:
         self.current_floor += 1
+        self.generate_floor(True)
 
-        self.engine.game_map = generate_dungeon(
-            max_rooms=self.max_rooms,
-            room_min_size=self.room_min_size,
-            room_max_size=self.room_max_size,
-            map_width=self.map_width,
-            map_height=self.map_height,
-            max_monsters_per_room=self.max_monsters_per_room,
-            max_items_per_room=self.max_items_per_room,
-            engine=self.engine,
-        )
+    def generate_floor(self, goingUp : bool) -> None:
+        from map.gen.dungeon import generate_level, generate_dungeon
+        self.engine.game_map = generate_level(self.room_min_size,
+                                              self.room_max_size,
+                                              self.map_width,
+                                                self.map_height,
+                                                self.engine,
+                                                self.current_floor,
+                                                goingUp)
+    
+
+
+        # self.engine.game_map = generate_dungeon(
+        #     max_rooms=self.max_rooms,
+        #     room_min_size=self.room_min_size,
+        #     room_max_size=self.room_max_size,
+        #     map_width=self.map_width,
+        #     map_height=self.map_height,
+        #     max_monsters_per_room=self.max_monsters_per_room,
+        #     max_items_per_room=self.max_items_per_room,
+        #     engine=self.engine,
+        # )
 
 
 class GameMap:

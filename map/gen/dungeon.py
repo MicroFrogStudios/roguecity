@@ -30,7 +30,8 @@ def generate_level(
     map_width: int,
     map_height: int,
     engine: Engine,
-    level: int, 
+    level: int,
+    goingUp: bool 
 )-> GameMap:
     """Generate a new dungeon map of the selected floor."""
     player = engine.player
@@ -103,21 +104,12 @@ def generate_level(
 
     print(len(north_placed_rooms)+len(south_placed_rooms)-2)
 
-    """
-    generate some points in the bounded area,
-    get the closer one to the corner
-    create a room centered on that point, take the point from the list
-
-    """
-
-        
-
-
-
-
-    # luego moverlo a donde toque empezar
-    player.place(*left_stair_room.center, dungeon)
-
+    factory.down_staircase.spawn(dungeon,*right_stair_room.center)
+    factory.up_staircase.spawn(dungeon,*left_stair_room.center)
+    if goingUp:
+        player.place(*right_stair_room.center, dungeon)
+    else:
+        player.place(*left_stair_room.center, dungeon)
     return dungeon
 
 

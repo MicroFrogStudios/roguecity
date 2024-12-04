@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from components.interactor_component import Interactor
     from classes.item import Item
     from classes.actor import Actor
+    from classes.prop import Prop
     from classes.item import Equipable
 
 import exceptions
@@ -146,6 +147,29 @@ class PetInteraction(ActorInteraction):
     
     def check_player_activable(self):
         return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 2
+
+class PropInteraction(Interactable):
+    parent: Prop
+
+    def check_player_activable(self) -> bool:
+        return self.engine.player.distance(self.parent.x,self.parent.y) < 2
+    
+class DescendInteractable(PropInteraction):
+    name = "GO DOWN"
+    def activate(self, action: actions.InteractiveAction) -> None:
+        self.engine.game_world.descend()
+        self.engine.message_log.add_message(
+                "You descend the staircase.", color.descend
+            )
+        
+class AscendInteractable(PropInteraction):
+    name = "GO UP"
+    def activate(self, action: actions.InteractiveAction) -> None:
+        self.engine.game_world.ascend()
+        self.engine.message_log.add_message(
+                "You ascend the staircase.", color.descend
+            )
+        
 
 class ItemInteraction(Interactable):
     parent: Item

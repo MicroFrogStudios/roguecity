@@ -51,7 +51,7 @@ def new_game() -> Engine:
         max_items_per_room=max_items_per_room,
     )
     
-    engine.game_world.generate_floor()
+    engine.game_world.generate_floor(False)
     engine.update_fov()    
     engine.message_log.add_message(
         "Hello and welcome, adventurer, to yet another dungeon!", color.welcome_text
