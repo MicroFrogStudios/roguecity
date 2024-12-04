@@ -79,8 +79,9 @@ class TalkInteraction(ActorInteraction):
 class AssaultInteraction(ActorInteraction):
     name = "ASSAULT"
     
-    def __init__(self, cry = "What are you doing?!") -> None:
+    def __init__(self, cry = "What are you doing?!",radius = 5) -> None:
         self.cry = cry
+        self.radius = radius
         
     def check_player_activable(self) -> bool:        
         return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 2
@@ -89,10 +90,14 @@ class AssaultInteraction(ActorInteraction):
         
         target = action.target_actor
         target.turn_hostile()
+        for actor in self.engine.game_map.actors:
+            if actor.distance(*action.target_xy) <= self.radius and actor.actor_type == self.parent.actor_type:
+                actor.turn_hostile()
+
         (x,y) = action.target_xy
         dx = x - action.entity.x
         dy = y - action.entity.y
-        actions.MeleeAction(action.entity,dx,dy)
+        actions.MeleeAction(action.entity,dx,dy).perform()
         self.engine.message_log.add_message(f"The {self.parent.name} says: {self.cry}")
       
 class TauntInteraction(ActorInteraction):

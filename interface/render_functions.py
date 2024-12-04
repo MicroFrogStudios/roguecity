@@ -48,7 +48,7 @@ def render_char_info(console, char, location):
     x,y = location
     
     console.print(x=x, y=y, string=f"Attack: {char.fighter.power}+({char.fighter.power_bonus})")
-    console.print(x=x, y=y+1, string=f"Defense: {char.fighter.defense}+({char.fighter.defense_bonus}")
+    console.print(x=x, y=y+1, string=f"Defense: {char.fighter.defense}+({char.fighter.defense_bonus})")
     
 def wrap(string: str, width: int) -> Iterable[str]:
     """Return a wrapped text message."""

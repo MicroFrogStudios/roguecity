@@ -184,7 +184,10 @@ class MainGameEventHandler(EventHandler):
         #     return CharacterScreenEventHandler(self.engine)
         elif key == tcod.event.KeySym.v:# hot key to big menu
             return TabMenuHandler(self.engine,2)
-
+        elif key == tcod.event.KeySym.o:
+            import numpy as np
+            self.engine.game_map.explored = np.full((self.engine.game_map.width, self.engine.game_map.height), fill_value=True, order="F")
+            # self.engine.gamemap.explored = np.full((width, height), fill_value=True, order="F")
         # No valid key was pressed
         return action
     

@@ -1,6 +1,6 @@
 from map.game_map import GameMap
 import  map.tile_types as tiles
-from map.gen.rooms import RectangularRoom, tunnel_between
+from map.gen.rooms import RectangularRoom, tunnel_between, Point
 import random
 from typing import List, TYPE_CHECKING
 import factories.entity_factory as factory
@@ -22,7 +22,162 @@ def generate_tutorial(engine:Engine):
     
     
     return tutorial_map
+
+
+def generate_level(
+    room_min_size: int,
+    room_max_size: int,
+    map_width: int,
+    map_height: int,
+    engine: Engine,
+    level: int, 
+)-> GameMap:
+    """Generate a new dungeon map of the selected floor."""
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player])
+    stair_room_dim = 6
     
+    left_stair_x = map_width//6 - stair_room_dim//2
+    left_stair_y = map_height//2 - stair_room_dim//2
+    left_stair_room = RectangularRoom(left_stair_x,left_stair_y,stair_room_dim,stair_room_dim)
+
+    dungeon.tiles[left_stair_room.inner] = tiles.new_floor()
+    dungeon.tiles[left_stair_x + stair_room_dim,left_stair_room.center[1]] = tiles.new_door()
+
+    right_stair_x = map_width//6*5 - stair_room_dim//2
+    right_stair_y = left_stair_y
+    right_stair_room = RectangularRoom(right_stair_x,right_stair_y,stair_room_dim,stair_room_dim)
+
+    dungeon.tiles[right_stair_room.inner] = tiles.new_floor()
+    dungeon.tiles[right_stair_room.center[0]-stair_room_dim//2,right_stair_room.center[1]] = tiles.new_door()
+    hall_width =right_stair_x- left_stair_x - stair_room_dim
+    main_hall = RectangularRoom(left_stair_x + stair_room_dim,left_stair_y+1,hall_width,4)
+    dungeon.tiles[main_hall.inner] = tiles.new_floor()
+
+    north_placed_rooms = [main_hall]
+    south_placed_rooms = [main_hall]
+    n_tries = 20
+    n_center_candidates = 60
+    
+    leftmost_x = left_stair_x + stair_room_dim + room_min_size//2
+    leftmost_y = left_stair_y - room_min_size//2
+    
+
+    for i in range(n_tries):
+        # north
+        center_candidates =generate_candidate_points(
+                                leftmost_x,
+                                room_min_size//2,
+                                right_stair_x - 1 - room_min_size//2,
+                                left_stair_y - room_min_size//2, 
+                                n_center_candidates)
+        generate_more_rooms(dungeon,north_placed_rooms,center_candidates,room_min_size,room_max_size)
+        
+        #south
+        center_candidates =generate_candidate_points(
+                                leftmost_x,
+                                main_hall.y2 + room_min_size//2,
+                                right_stair_x - 1 - room_min_size//2,
+                                dungeon.height - room_min_size//2, 
+                                n_center_candidates)
+        generate_more_rooms(dungeon,south_placed_rooms,center_candidates,room_min_size,room_max_size)
+
+        
+        
+    for roomA in north_placed_rooms:
+        for roomB in north_placed_rooms:
+            if roomA is not roomB:
+                door = roomA.touchMiddlePoint(roomB)
+                if door is not None:
+                    print("connecting adjacent rooms..")
+                    dungeon.tiles[door] = tiles.new_door()
+    
+    for roomA in south_placed_rooms:
+        for roomB in south_placed_rooms:
+            if roomA is not roomB:
+                door = roomA.touchMiddlePoint(roomB)
+                if door is not None:
+                    print("connecting adjacent rooms..")
+                    dungeon.tiles[door] = tiles.new_door()
+
+
+    print(len(north_placed_rooms)+len(south_placed_rooms)-2)
+
+    """
+    generate some points in the bounded area,
+    get the closer one to the corner
+    create a room centered on that point, take the point from the list
+
+    """
+
+        
+
+
+
+
+    # luego moverlo a donde toque empezar
+    player.place(*left_stair_room.center, dungeon)
+
+    return dungeon
+
+
+def generate_more_rooms(dungeon : GameMap, placed_rooms: list[RectangularRoom],center_candidates : list[Point],room_min_size,room_max_size):
+    
+    current_room = placed_rooms[random.randint(0,len(placed_rooms)-1)]
+    while len(center_candidates) > 0:
+        center = Point(*current_room.center)
+        nearest_candidate_i = center.nearestToSelf(center_candidates)
+        overlap= False
+        for room in placed_rooms:
+            
+            if center_candidates[nearest_candidate_i].inside(room):
+                overlap = True
+                break
+        if overlap:
+            del center_candidates[nearest_candidate_i]
+            print("candidate discarded for overlap")
+            continue
+
+        next_center = center_candidates.pop(nearest_candidate_i) 
+        next_room : RectangularRoom  = current_room.adjacentRoomFromCenter(next_center,random.randint(room_min_size,room_max_size))
+        if next_room is None:
+            print("candidate discarded for nullity")
+            continue
+
+        if next_room.height < room_min_size or next_room.width < room_min_size:
+            print(f"candidate discarded for smallness: {next_room.width}, {next_room.height}")
+            continue
+        interesects = False
+        for room in placed_rooms:
+            if next_room.intersects(room):
+                interesects = True
+                break
+        if interesects:
+            print(f"candidate discarded for interesction")
+            continue
+        if next_room.y1 <= 0 or next_room.x1 <=0 or next_room.y2 > dungeon.height or next_room.x2 > dungeon.width :
+            print(f"candidate discarded for going out of bounds")
+            continue
+        dungeon.tiles[next_room.inner] = tiles.new_floor()
+        if not next_room.touching(current_room):
+            print(f"candidate discarded for not touching")
+            continue
+        dungeon.tiles[current_room.touchMiddlePoint(next_room)] = tiles.new_door()
+        print(current_room.touchMiddlePoint(next_room))
+        place_entities(next_room,dungeon,5, 5)
+        placed_rooms.append(next_room)
+        current_room = next_room
+
+def generate_candidate_points(x_lower,y_lower, x_upper, y_upper, n_center_candidates ):
+    candidates : list[Point] = []
+    for i in range(n_center_candidates):
+        x = random.randint(x_lower, x_upper)
+        y = random.randint(y_lower,y_upper)
+        print(f"{x}, {y}")
+        candidates.append(Point(x,y))
+    return candidates
+
+
 def generate_dungeon(
     max_rooms: int,
     room_min_size: int,

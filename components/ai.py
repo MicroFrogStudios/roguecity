@@ -242,6 +242,10 @@ class RandomGait(BaseAI):
         
     def perform(self) -> None:
         # Revert the AI back to the original state if the effect has run its course.
+        
+        if not self.engine.game_map.visible[self.entity.x, self.entity.y]:
+            return WaitAction(self.entity).perform()
+
         if self.turn_counter > 0:
             self.turn_counter -= 1
             

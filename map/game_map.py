@@ -50,8 +50,8 @@ class GameWorld:
 
     
     def tutorial_map(self):
-        from map.gen.dungeon import generate_tutorial
-        self.engine.game_map = generate_tutorial(self.engine)
+        from map.gen.dungeon import generate_level
+        self.engine.game_map = generate_level(8,12,self.map_width, self.map_height,self.engine,5)
     
     def test_world(self) -> None:
         self.engine.game_map = GameMap(self.engine, self.map_width, self.map_height, entities=[self.engine.player])

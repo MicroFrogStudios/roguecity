@@ -153,8 +153,8 @@ class MainMenu(input_handlers.BaseEventHandler):
         #         return input_handlers.PopupMessage(self, f"Failed to load save:\n{exc}")
         # elif event.sym == tcod.event.KeySym.n:
         #     return input_handlers.MainGameEventHandler(new_game())
-        # elif event.sym == tcod.event.KeySym.t:
-        #     return input_handlers.MainGameEventHandler(test_game())
+        if event.sym == tcod.event.KeySym.t:
+            return input_handlers.MainGameEventHandler(test_game())
         
         if key in config.MOVE_KEYS:
             dx, dy = config.MOVE_KEYS[key]
