@@ -39,7 +39,9 @@ class Actor(Entity):
         hostile: bool,
         actor_type,
         icon: str = "assets\sprites\\red_egg.png",
-        interactables = None
+        blood_color = (97, 16, 16),
+        interactables = None,
+        blocks_movement=True
 
     ):
         super().__init__(
@@ -49,12 +51,12 @@ class Actor(Entity):
             fgColor=color,
             name=name,
             description=description,
-            blocks_movement=True,
+            blocks_movement=blocks_movement,
             render_order=RenderOrder.ACTOR,
             icon=icon,
             interactables=interactables
         )
-        
+        self.blood_color = blood_color
         if friendly_ai:
             friendly_ai.entity = self
             self.friendly_ai = friendly_ai

@@ -26,12 +26,14 @@ class Button:
     def render(self, console: Console, engine : Engine):
         
         fg = self.fg 
+        text = self.text_color
         if self.disabled:
             fg = self.disabled_color
+            text = self.disabled_color
 
         console.draw_frame(self.x,self.y,self.width,self.height,fg=fg,bg= self.bg,decoration=self.decoration)
 
-        console.print(x= self.x+ self.width//2, y= self.y + self.height//2,string=self.title,fg=self.text_color, alignment=libtcodpy.CENTER)
+        console.print(x= self.x+ self.width//2, y= self.y + self.height//2,string=self.title,fg=text, alignment=libtcodpy.CENTER)
         
         
     def hovering(self,engine: Engine)-> bool:

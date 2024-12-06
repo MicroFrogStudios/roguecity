@@ -78,7 +78,7 @@ class TalkInteraction(ActorInteraction):
         self.engine.message_log.add_message(f"The {self.parent.name} says: {talked_line}",color.welcome_text)
         
 class AssaultInteraction(ActorInteraction):
-    name = "ASSAULT"
+    name = "STRIKE"
     
     def __init__(self, cry = "What are you doing?!",radius = 5) -> None:
         self.cry = cry
@@ -91,9 +91,6 @@ class AssaultInteraction(ActorInteraction):
         
         target = action.target_actor
         target.turn_hostile()
-        for actor in self.engine.game_map.actors:
-            if actor.distance(*action.target_xy) <= self.radius and actor.actor_type == self.parent.actor_type:
-                actor.turn_hostile()
 
         (x,y) = action.target_xy
         dx = x - action.entity.x
@@ -143,7 +140,10 @@ class PetInteraction(ActorInteraction):
                 f"The {action.entity.name} pets the {target.name}",
                 color.white)
         self.engine.message_log.add_message(f"The {self.parent.name} says: {self.response}")
+        
+        target.friendly_ai = ai.FollowNeutral(target,action.entity,2)
         target.turn_friendly()
+        target.actor_type = action.entity.actor_type
     
     def check_player_activable(self):
         return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 2

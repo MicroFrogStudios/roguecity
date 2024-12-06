@@ -17,7 +17,7 @@ player = Actor(
     name="Player",
     description= "This is you",
     friendly_ai=ai.IdleNeutral(),
-    fighter=Fighter(hp=10, defense=0, power=1,magic=1),
+    fighter=Fighter(hp=25, defense=0, power=1,magic=1),
     inventory=Inventory(capacity=27),
     icon= "assets\sprites\magito_azul.png",
     hostile=False,
@@ -38,18 +38,32 @@ old_man = Actor(
     inventory=Inventory(capacity=1),
     )
 
+lost_warrior =  Actor(
+    char="w",
+    color=(177, 176, 154),
+    name="Lost Warrior",
+    description= "Shadow of a former soldier, driven mad by never-ending wander",
+    hostile=True,
+    actor_type=Actor.Type.MONSTER,
+    friendly_ai=ai.RandomGait(5),
+    hostile_ai=ai.HostileEnemy(),
+    fighter=Fighter(hp=5, defense=1, power=2,magic=0),
+    inventory=Inventory(capacity=2),
+    icon= "assets\sprites\lost_warrior.png",
+)
 weak_skuly = Actor(
     char="i",
-    color=(255, 255, 255),
-    name="Lost skull",
+    color=(177, 176, 154),
+    name="Walking skull",
     description= "Eerie skull walking on two legs. Harmless if left alone",
     hostile=False,
     actor_type=Actor.Type.MONSTER,
     friendly_ai=ai.RandomGait(3),
     hostile_ai=ai.HostileEnemy(),
-    fighter=Fighter(hp=4, defense=0, power=1,magic=0),
+    fighter=Fighter(hp=2, defense=0, power=1,magic=0),
     inventory=Inventory(capacity=0),
     icon= "assets\sprites\skuly.png",
+    blood_color= (120, 116, 116),
     interactables=[interactables.AssaultInteraction(cry="Shrieeek!")],
 )
 rat_small = Actor(
@@ -59,9 +73,9 @@ rat_small = Actor(
     hostile=False,
     actor_type=Actor.Type.CRITTER,
     description="A small mammal looking for food",
-    friendly_ai=ai.FollowNeutral(follow_distance=3),
+    friendly_ai=ai.CuriousCritter(),
     hostile_ai= ai.HostileEnemy(),
-    fighter=Fighter(hp=3, defense=0, power=1,magic=0),
+    fighter=Fighter(hp=1, defense=0, power=1,magic=0),
     inventory=Inventory(capacity=0),
     interactables=[interactables.TauntInteraction(response="= ò · ó ="),interactables.PetInteraction(response="= ^ · ^ =")],
     icon= "assets/sprites/raticuli.png",
@@ -162,18 +176,18 @@ from classes.prop import Prop
 
 down_staircase = Prop(
     char="▼",
-    color=color.gray,
+    color=color.wall_dark,
     name="Staircase",
     description="It goes down",
-    icon="assets/sprites/basic cloak.png",
+    icon="assets/sprites/downstairs.png",
     interactables=[interactables.DescendInteractable()]
 )
 
 up_staircase = Prop(
     char="▲",
-    color=color.gray,
+    color=color.wall_dark,
     name="Staircase",
     description="It goes up",
-    icon="assets/sprites/basic cloak.png",
+    icon="assets/sprites/upstairs.png",
     interactables=[interactables.AscendInteractable()]
 )

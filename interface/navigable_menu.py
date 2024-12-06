@@ -201,7 +201,7 @@ class ContextPanelMenu(BaseMenu):
     
     def render(self, console: Console, engine: Engine):
         if self.parent is None:
-            console.draw_frame(x=self.x, y=self.y, width=self.width, height=self.height,title=self.name,clear=True,fg=color.white,bg=color.black )
+            console.draw_frame(x=self.x, y=self.y, width=self.width, height=self.height,title=self.name,clear=True,fg=color.menu_border,bg=color.black )
         for sub in self.submenus:
             sub.render(console,engine)
    
@@ -239,7 +239,7 @@ class MapContextContainer(Container):
         self.engine = engine
         self.current_tab : ContextPanelMenu = ContextPanelMenu(self.x,self.y+3,self.width,self.entities[self.tab_cursor],engine,navigable=True,parent=self)
         self.height = self.current_tab.height+3
-        self.border_color = color.white
+        self.border_color = color.menu_border
     
     def navigate(self, dx, dy,dz=0):
         if dz != 0:

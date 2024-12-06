@@ -85,7 +85,7 @@ class Fighter(BaseComponent):
             death_msg_color = color.enemy_die
 
         # self.parent.char = "%"
-        self.parent.bgColor = (141, 0, 0)
+        self.parent.bgColor = self.parent.blood_color
         self.parent.blocks_movement = False
         self.parent.ai = None
         self.parent.name = f"remains of {self.parent.name}"

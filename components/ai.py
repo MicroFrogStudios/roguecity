@@ -10,7 +10,7 @@ from actions import Action, MeleeAction, MovementAction, WaitAction, BumpAction
 
 
 if TYPE_CHECKING:
-    from classes.actor import Actor
+    from classes.actor import Actor 
     from classes.entity import Entity
     from classes.item import Item
 
@@ -150,6 +150,45 @@ class HostileEnemy(BaseAI):
 
         return WaitAction(self.entity).perform()
     
+class HostileNeutral(BaseAI):
+    def __init__(self, entity: Actor=None,target_type = None):
+        super().__init__(entity)
+        self.target_type = target_type
+        self.path: List[Tuple[int, int]] = []
+        self.target :Actor = None
+    def perform(self) -> None:
+        
+
+        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+            if  self.target is not None and not self.target.is_alive:
+                self.target = None
+            if self.target is None:
+                min_dis = 20
+                for actor in self.engine.game_map.actors:
+                    dis = actor.distance(self.entity.x,self.entity.y)
+                    if dis <= min_dis and actor.actor_type == self.target_type and self.engine.game_map.visible[actor.x, actor.y]:
+                        self.target = actor
+                        min_dis = dis
+            
+            if self.target is None:
+                self.entity.turn_friendly()
+                return
+            dx = self.target.x - self.entity.x
+            dy = self.target.y - self.entity.y
+            distance = max(abs(dx), abs(dy))  # Chebyshev distance.
+            if distance <= 1:
+                return MeleeAction(self.entity, dx, dy).perform()
+
+            self.path = self.get_path_to(self.target.x, self.target.y)
+
+        if self.path:
+            dest_x, dest_y = self.path.pop(0)
+            return MovementAction(
+                self.entity, dest_x - self.entity.x, dest_y - self.entity.y,
+            ).perform()
+
+        return WaitAction(self.entity).perform()
+    
 class ConfusedEnemy(BaseAI):
     """
     A confused enemy will stumble around aimlessly for a given number of turns, then revert back to its previous AI.
@@ -226,7 +265,37 @@ class FollowNeutral(BaseAI):
             ).perform()
         
         return WaitAction(self.entity).perform()
-    
+
+class CuriousCritter(BaseAI):
+
+    def __init__(self, entity=None,radius= 20,boringness = 10):
+        self.radius = radius
+        self.boringness = boringness
+        self.target = None
+        super().__init__(entity)
+
+
+    def perform(self) -> None:
+        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+            if self.boringness == 0:
+                self.target = None
+            if self.target is None and self.boringness > 10: 
+                min_dis = self.radius
+                for actor in self.engine.game_map.actors:
+                    distance =actor.distance(self.entity.x,self.entity.y)
+                    if distance <= min_dis and actor is not self.entity:
+                        self.target = actor
+                        min_dis = distance
+                        
+            if self.target:
+                self.boringness -= 1
+                return FollowNeutral(self.entity,self.target).perform()
+            else:
+                self.boringness += 1
+                return RandomGait(0,self.entity).perform()
+            
+        return WaitAction(self.entity).perform()
+
 class RandomGait(BaseAI):
     """
    will move randomly with a given frequency

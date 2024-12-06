@@ -1,5 +1,5 @@
 from typing import Tuple
-
+import enums.color as color
 import numpy as np  # type: ignore
 
 # Tile graphics structured type compatible with Console.tiles_rgb.
@@ -33,26 +33,26 @@ def new_tile(
     return np.array((walkable, transparent, dark, light), dtype=tile_dt)
 
 
-def new_floor(r=200, g=180, b=50):
+def new_floor(light_color = color.floor_light, dark_color =color.floor_dark):
     return new_tile(
         walkable=True, transparent=True,
-        dark=(ord(" "), (255, 255, 255), (50, 50, 150)), 
-        light=(ord(" "), (255, 255, 255), (r, g, b)),
+        dark=(ord(" "), (255, 255, 255), dark_color), 
+        light=(ord(" "), (255, 255, 255), light_color),
     )
 # versions of this method with color constants, might want to leave presets with some colors for reusing memory
 
 
-def new_wall(r=130, g=110, b=50):
+def new_wall(light_color = color.wall_light, dark_color =color.wall_dark):
     return new_tile(
         walkable=False, transparent=False, 
-        dark=(ord(" "), (255, 255, 255), (0, 0, 100)),
-        light=(ord(" "), (255, 255, 255), (r, g, b)),
+        dark=(ord(" "), (255, 255, 255), dark_color),
+        light=(ord(" "), (255, 255, 255), light_color),
     )
 
-def new_door():
+def new_door(light_fg = color.floor_light,light_bg = color.wall_light,dark_fg =color.floor_dark,dark_bg = color.wall_dark):
     return new_tile(walkable=True, transparent=False,
-        dark=(ord("┼"), (0, 0, 100), (50, 50, 150)),
-        light=(ord("┼"), (130, 110, 50), (200, 180, 50)))
+        dark=(ord("┼"), dark_bg, dark_fg),
+        light=(ord("┼"), light_bg, light_fg))
 
 down_stairs = new_tile(
     walkable=True,

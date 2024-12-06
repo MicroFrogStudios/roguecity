@@ -5,6 +5,7 @@ from typing import Optional, Tuple, TYPE_CHECKING
 from components.interactor_component import Interactor
 import enums.color as color
 import exceptions
+from components import ai
 if TYPE_CHECKING:
     from engine import Engine
     from classes.entity import Entity
@@ -88,12 +89,20 @@ class MeleeAction(ActionWithDirection):
         damage = target.fighter.armor_special_effect(self,damage)
         
         attack_desc = f"{self.entity.name.capitalize()} attacks {target.name}"
+
+        
         if self.entity is self.engine.player:
+            for actor in self.engine.game_map.actors:
+                if actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
+                    actor.turn_hostile()
             attack_color = color.player_atk
         else:
             attack_color = color.enemy_atk
         if damage > 0:
-            
+            if target is self.engine.player:
+                for actor in self.engine.game_map.actors:
+                    if actor.actor_type == self.engine.player.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
+                        actor.ai = ai.HostileNeutral(actor,self.entity.actor_type)
             self.engine.message_log.add_message(f"{attack_desc} for {damage} hit points.",attack_color)
             target.fighter.hp -= damage
             if target == self.engine.player:

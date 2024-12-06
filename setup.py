@@ -105,14 +105,14 @@ class MainMenu(input_handlers.BaseEventHandler):
             console.width // 2,
             console.height // 2 - 4,
             "CRAWLING UNDER THE MOUNTAIN",
-            fg=color.menu_title,
+            fg=color.interface_highlight,
             alignment=libtcodpy.CENTER,
         )
         console.print(
             console.width // 2,
             console.height - 2,
             "By Microfrog dev",
-            fg=color.menu_title,
+            fg=color.interface_highlight,
             alignment=libtcodpy.CENTER,
         )
 
