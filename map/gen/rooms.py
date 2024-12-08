@@ -26,7 +26,9 @@ class RectangularRoom:
     @property
     def width(self) -> int:
         return self.x2 - self.x1
-
+    @property
+    def area(self) -> int:
+        return self.height*self.width
     @property
     def inner(self) -> Tuple[slice, slice]:
         """Return the inner area of this room as a 2D array index."""

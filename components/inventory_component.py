@@ -36,6 +36,12 @@ class Inventory(BaseComponent):
         self.engine.game_map.entities.remove(item)
         item.parent = self
         self.items.append(item)
+
+    def has_food(self):
+        for i in self.items:
+            if i.item_type.value == "FOOD":
+                return True
+        return False
         
         
 class Equipment(BaseComponent):

@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from classes.prop import Prop
     from classes.item import Equipable
 
-import exceptions
+import random
 from handlers.input_handlers import (
     ActionOrHandler,
     AreaRangedAttackHandler,
@@ -76,7 +76,27 @@ class TalkInteraction(ActorInteraction):
         
         talked_line = self.dialogue.get_next_line(self.engine,self)
         self.engine.message_log.add_message(f"The {self.parent.name} says: {talked_line}",color.welcome_text)
+
+class GiveFood(ActorInteraction):
+    name = "FEED"
+
+    def check_player_activable(self) -> bool:        
+        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 4 and self.engine.player.inventory.has_food()
+
+    def activate(self, action: actions.InteractiveAction) -> None:
         
+        feeder = action.entity
+        target = action.target_actor
+        
+        for item in feeder.inventory.items:
+            if item.item_type.value == "FOOD":
+                food = item
+                feeder.inventory.items.remove(item)
+                break
+
+        self.engine.message_log.add_message(f"you feed the {target.name}. They enter in a trance while eating in a frenzy.",color.welcome_text)
+        target.ai = ai.FeastingEnemy(target,target.ai,food)
+
 class AssaultInteraction(ActorInteraction):
     name = "STRIKE"
     
@@ -97,7 +117,60 @@ class AssaultInteraction(ActorInteraction):
         dy = y - action.entity.y
         actions.MeleeAction(action.entity,dx,dy).perform()
         self.engine.message_log.add_message(f"The {self.parent.name} says: {self.cry}")
-      
+
+class ScareInteraction(ActorInteraction):
+    name = "SPOOK"
+
+    def check_player_activable(self) -> bool:        
+        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 2 and not isinstance(self.parent.ai,ScareInteraction)
+
+    def activate(self, action: actions.InteractiveAction) -> None:
+        
+        target = action.target_actor
+        target.ai = ai.StunnedAi(target,target.ai,4)
+        self.engine.message_log.add_message(
+            f"The {target.name} is so spooked it froze in place!",
+            color.status_effect_applied,
+        )
+
+
+class BiteInteraction(ActorInteraction):
+    name = "BITE"
+
+    def check_player_activable(self) -> bool:        
+        return self.parent.is_alive and self.engine.player.distance(self.parent.x,self.parent.y) < 2
+
+
+    def activate(self, action: actions.InteractiveAction) -> None:
+        
+        target = action.target_actor
+        if action.entity is action.engine.player:
+            
+            self.engine.message_log.add_message(
+                f"you bite the {target.name}",
+                color.enemy_atk)
+        else:
+             self.engine.message_log.add_message(
+                f"The {action.entity.name} bites the {target.name}",
+                color.enemy_atk)
+             
+        
+        rand = random.randint(0,100)
+        if rand > 60:
+            self.engine.message_log.add_message("you recover some HP!")
+            action.entity.fighter.heal(2)
+        elif rand > 40:
+            self.engine.message_log.add_message("you ate poison, you lost 2 HP")
+            action.entity.fighter.take_damage(2)
+        elif rand > 20:
+            self.engine.message_log.add_message("you feel dizzy...")
+            confusedAi = ai.ConfusedEnemy(action.entity,action.entity.ai,10)
+            action.entity.ai = confusedAi
+        elif rand > 0:
+            pass # might add another effect later
+        target.turn_hostile()
+        target.fighter.take_damage(1)
+
 class TauntInteraction(ActorInteraction):
     
     name = "TAUNT"
@@ -292,11 +365,58 @@ class LightningDamageConsumable(scrollCastInteractable):
             self.engine.message_log.add_message(
                 f"A lighting bolt strikes the {target.name} with a loud thunder, for {self.damage} damage!"
             )
-            target.fighter.take_damage(self.damage)
+            target.fighter.take_damage(self.damage + action.entity.fighter.magic)
             self.consume()
         else:
             raise Impossible("No enemy is close enough to strike.")
+
+class throwInteraction(ConsumeInteractable): 
+    name = "THROW"
+
+    def __init__(self, damage: int):
+        self.damage = damage
+
+    def get_action(self, activator: Interactor) -> SingleRangedAttackHandler:
+        self.engine.message_log.add_message(
+            "Select a target location.", color.needs_target
+        )
+        return SingleRangedAttackHandler(
+            self.engine,
+            callback=lambda xy: actions.InteractiveAction(activator,self, xy),
+        )
         
+
+    def activate(self, action: actions.InteractiveAction) -> None:
+        consumer = action.entity
+        target = action.target_actor
+
+        if not self.engine.game_map.visible[action.target_xy]:
+            raise Impossible("You cannot target an area that you cannot see.")
+        if not target:
+            raise Impossible("You must select an enemy to target.")
+        if target is consumer:
+            raise Impossible("You cannot throw it on yourself!")
+
+        self.engine.message_log.add_message(
+            f"You throw the {self.parent.name} at the {target.name}!",
+            color.player_atk,
+        )
+        damage = consumer.fighter.calc_damage(target.fighter) - consumer.fighter.power_bonus + self.damage
+        if damage > 0:
+            target.fighter.take_damage(damage)
+            self.engine.message_log.add_message(
+            f"The {self.parent.name} hits the {target.name} doing {damage} damage!",
+            color.player_atk)
+        else:
+            self.engine.message_log.add_message(
+            f"The {self.parent.name} misses the {target.name}",
+            color.player_atk)
+        if consumer is self.engine.player:
+            for actor in self.engine.game_map.actors:
+                if actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
+                    actor.turn_hostile()
+        self.consume()
+
 class ConfusionConsumable(scrollCastInteractable):
     def __init__(self, number_of_turns: int):
         self.number_of_turns = number_of_turns
@@ -327,7 +447,7 @@ class ConfusionConsumable(scrollCastInteractable):
             color.status_effect_applied,
         )
         target.ai = ai.ConfusedEnemy(
-            entity=target, previous_ai=target.ai, turns_remaining=self.number_of_turns,
+            entity=target, previous_ai=target.ai, turns_remaining=self.number_of_turns + action.entity.fighter.magic_total,
         )
         self.consume()
 
@@ -353,13 +473,17 @@ class FireballDamageConsumable(scrollCastInteractable):
             raise Impossible("You cannot target an area that you cannot see.")
 
         targets_hit = False
+        actors_hit : list[Actor] = []
         for actor in self.engine.game_map.actors:
             if actor.distance(*target_xy) <= self.radius:
-                self.engine.message_log.add_message(
-                    f"The {actor.name} is engulfed in a fiery explosion, taking {self.damage} damage!"
-                )
-                actor.fighter.take_damage(self.damage)
+                actors_hit.append(actor)
                 targets_hit = True
+
+        for actor in actors_hit:
+            self.engine.message_log.add_message(
+                    f"The {actor.name} is engulfed in a fiery explosion, taking {self.damage + action.entity.fighter.magic_total} damage!"
+                )
+            actor.fighter.take_damage(self.damage + action.entity.fighter.magic_total)
 
         if not targets_hit:
             raise Impossible("There are no targets in the radius.")

@@ -6,8 +6,19 @@ red = (0xFF,0x0,0x0)
 gray = (120,120,120)
 dark_gray = (89, 89, 89)
 
+magic_green = (164, 208, 149)
+magic_purple = (79, 54, 82)
 moss_green = (82, 82, 54)
-stone_grey = (61, 58, 57)
+monster_blue = (61, 54, 82)
+monster_shine = (103, 92, 140)
+
+stone_grey_darker = (45, 43, 42)
+stone_grey_dark = (61, 58, 57)
+stone_grey = (77, 73, 72)
+stone_grey_light =(92, 87, 86)
+stone_grey_lighter = (107, 101, 100)
+
+
 bone_light = (221, 210, 178)
 
 earth_light = (71, 53, 49)
@@ -20,6 +31,11 @@ floor_light = earth_light
 floor_dark = earth_dark
 wall_light = wood_light
 wall_dark = wood_dark
+
+# floor_light = stone_grey_light
+# floor_dark = stone_grey_dark
+# wall_light = stone_grey
+# wall_dark = stone_grey_darker
 
 #messages
 player_atk = (0xE0, 0xE0, 0xE0)
@@ -51,8 +67,8 @@ interface_lowlight = moss_green
 menu_selected = interface_highlight
 menu_border = interface_lowlight
 
-button_color = interface_lowlight
-button_hover = (204, 255, 255)
+button_color = interface_highlight
+button_hover = white
 button_grey = dark_gray
 button_text = interface_highlight
 

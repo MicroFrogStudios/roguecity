@@ -54,6 +54,21 @@ class Fighter(BaseComponent):
         return self.att_bonus("magic")
 
     @property
+    def power_total(self):
+        return self.power + self.att_bonus("power")
+    
+    @property
+    def defense_total(self):
+        return self.defense + self.att_bonus("defense")
+    
+    @property
+    def hp_total(self):
+        return self.hp + self.att_bonus("hp")
+    
+    @property
+    def magic_total(self):
+        return self.magic + self.att_bonus("magic")
+    @property
     def weapon(self):
         return self.parent.equipment.weapon
     
@@ -92,6 +107,7 @@ class Fighter(BaseComponent):
         self.parent.render_order = RenderOrder.CORPSE
 
         self.engine.message_log.add_message(death_message,death_msg_color)
+        self.parent.drop_loot(self.engine.game_map)
         
     
     def heal(self, amount: int) -> int:

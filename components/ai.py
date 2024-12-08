@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from classes.actor import Actor 
     from classes.entity import Entity
     from classes.item import Item
-
+    from components.interactable_component import ActorInteraction
 class BaseAI(Action):
 
 
@@ -86,8 +86,14 @@ class PlayerInteract(PlayerAI):
             if hasattr(self.target,"pickUpInteractable"):
                 self.target : Item
                 return self.target.pickUpInteractable.get_action(self.entity.interactor).perform()
-            elif hasattr(self.target,"hostile") and self.target.hostile:
-                return MeleeAction(self.entity, dx, dy).perform()
+            elif hasattr(self.target,"hostile"):
+                target : Actor = self.target
+                if target.hostile:
+                    return MeleeAction(self.entity, dx, dy).perform()
+                elif target.interactables:
+                    interaction : ActorInteraction = target.interactables[0]
+                    if interaction.check_player_activable():
+                        return interaction.get_action(self.entity.interactor).perform()
         
         self.path = self.get_path_to(self.target.x, self.target.y)
 
@@ -149,7 +155,115 @@ class HostileEnemy(BaseAI):
             ).perform()
 
         return WaitAction(self.entity).perform()
+
+class FleeingEnemy(BaseAI):
+    def __init__(self, entity: Actor = None,target = None):
+        super().__init__(entity)
+        self.target = target
+        self.path: List[Tuple[int, int]] = []
     
+    def perform(self) -> None:
+        """Follows the target at certain distance"""
+        if self.target == None:
+            self.target = self.engine.player
+        dx = self.target.x - self.entity.x
+        dy = self.target.y - self.entity.y
+        distance = max(abs(dx), abs(dy))  # Chebyshev distance.
+
+        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+
+            self.path = self.get_path_to(self.target.x, self.target.y)
+
+        if self.path:
+            dest_x, dest_y = self.path.pop(0)
+            
+            return MovementAction(
+                self.entity, -1*(dest_x - self.entity.x), -1*(dest_y - self.entity.y),
+            ).perform()
+        
+        return WaitAction(self.entity).perform()
+
+
+class MageEnemy(BaseAI):#TODO
+    def __init__(self, entity: Actor=None,range_dist=5,hitchance = 50):
+        super().__init__(entity)
+        self.path: List[Tuple[int, int]] = []
+        self.target :Actor = None
+        self.range_dist = range_dist
+        self.hitchance = hitchance
+    def perform(self) -> None:
+        self.target = self.engine.player
+        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+            
+            dx = self.target.x - self.entity.x
+            dy = self.target.y - self.entity.y
+            distance = max(abs(dx), abs(dy))
+            if distance <= self.range_dist :
+                if random.randint(0,100) > self.hitchance:
+
+                    dmg = self.entity.fighter.magic_total - self.target.fighter.defense_total
+                    if dmg > 0:
+                        self.target.fighter.take_damage(dmg)
+                        self.engine.message_log.add_message(f"The {self.entity.name}'s magic does {dmg} damage to the {self.target.name}!")
+                    else:
+                        self.engine.message_log.add_message(f"The {self.entity.name}'s magic does nothing to the {self.target.name}.")
+            
+            self.path = self.get_path_to(self.target.x, self.target.y)        
+            if self.path and distance != self.range_dist:
+                dest_x, dest_y = self.path.pop(0)
+                direction = 1 if distance > self.range_dist else -1
+                return MovementAction(
+                    self.entity, direction*(dest_x - self.entity.x), direction*(dest_y - self.entity.y),
+                ).perform()
+        
+        return WaitAction(self.entity).perform()
+
+class HungryEnemy(BaseAI):
+    def __init__(self, entity: Actor=None):
+        super().__init__(entity)
+        self.path: List[Tuple[int, int]] = []
+        self.target :Actor = None
+
+    def perform(self) -> None:
+        
+
+        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+            if  self.target is not None and not self.target.is_alive:
+                try:
+                    self.engine.game_map.entities.remove(self.target)
+                    self.engine.message_log.add_message(f"The {self.entity.name} ate the {self.target.name}")
+                    self.target = None
+                    return WaitAction(self.entity).perform() 
+                except KeyError:
+                    print("it tried to eat something weird")
+                self.target = None
+            if self.target is None:
+                min_dis = 20
+                for actor in self.engine.game_map.actors:
+                    dis = actor.distance(self.entity.x,self.entity.y)
+                    if dis <= min_dis and actor.actor_type != self.entity.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
+                        self.target = actor
+                        min_dis = dis
+            
+            if self.target is None:
+                self.entity.turn_friendly()
+                return WaitAction(self.entity).perform()
+            dx = self.target.x - self.entity.x
+            dy = self.target.y - self.entity.y
+            distance = max(abs(dx), abs(dy))  # Chebyshev distance.
+            if distance <= 1:
+                return MeleeAction(self.entity, dx, dy).perform()
+
+            self.path = self.get_path_to(self.target.x, self.target.y)
+
+        if self.path:
+            dest_x, dest_y = self.path.pop(0)
+            return MovementAction(
+                self.entity, dest_x - self.entity.x, dest_y - self.entity.y,
+            ).perform()
+
+        return WaitAction(self.entity).perform()
+
 class HostileNeutral(BaseAI):
     def __init__(self, entity: Actor=None,target_type = None):
         super().__init__(entity)
@@ -189,6 +303,33 @@ class HostileNeutral(BaseAI):
 
         return WaitAction(self.entity).perform()
     
+
+class StunnedAi(BaseAI):
+
+    def __init__(
+        self, entity: Actor, previous_ai: Optional[BaseAI], turns_remaining: int
+    ):
+        super().__init__(entity)
+
+        self.previous_ai = previous_ai
+        self.turns_remaining = turns_remaining 
+
+    def perform(self) -> None:
+        # Revert the AI back to the original state if the effect has run its course.
+        if self.turns_remaining <= 0:
+            self.engine.message_log.add_message(
+                f"The {self.entity.name} is no longer stunned."
+            )
+            self.entity.ai = self.previous_ai
+        else:
+            
+
+            self.turns_remaining -= 1
+
+           
+            return WaitAction(self.entity).perform()
+
+
 class ConfusedEnemy(BaseAI):
     """
     A confused enemy will stumble around aimlessly for a given number of turns, then revert back to its previous AI.
@@ -230,7 +371,31 @@ class ConfusedEnemy(BaseAI):
             # The actor will either try to move or attack in the chosen random direction.
             # Its possible the actor will just bump into the wall, wasting a turn.
             return BumpAction(self.entity, direction_x, direction_y,).perform()
-        
+
+class FeastingEnemy(BaseAI):
+    def __init__(
+        self, entity: Actor, previous_ai: Optional[BaseAI], food: Item
+    ):
+        super().__init__(entity)
+
+        self.previous_ai = previous_ai
+        self.turns_remaining = 8
+
+    def perform(self) -> None:
+        # Revert the AI back to the original state if the effect has run its course.
+        if self.turns_remaining <= 0:
+            self.engine.message_log.add_message(
+                f"The {self.entity.name} has finished the food, it regained 4 hitpoints"
+            )
+            self.entity.ai = self.previous_ai
+            self.entity.fighter.heal(4)
+        else:
+            self.turns_remaining -= 1
+            
+
+            
+        return WaitAction(self.entity).perform()
+
 class IdleNeutral(BaseAI):
     
     def perform(self) -> None:

@@ -4,7 +4,7 @@ from map.gen.rooms import RectangularRoom, tunnel_between, Point
 import random
 from typing import List, TYPE_CHECKING
 import factories.entity_factory as factory
-
+import enums.color as color
 from engine import Engine
 
 
@@ -24,36 +24,134 @@ def generate_tutorial(engine:Engine):
     return tutorial_map
 
 
+def highest_zone(engine: Engine,map_width,map_height): 
+    floor = tiles.new_floor(color.stone_grey_light,color.stone_grey_dark)
+    wall = tiles.new_wall(color.stone_grey,color.stone_grey_darker)
+    door = tiles.new_door(color.stone_grey_light,color.stone_grey,color.stone_grey_dark,color.stone_grey_darker)
+
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player],wall=wall)
+    stair_room_dim = 6
+
+    right_stair_x = map_width//6*5 - stair_room_dim//2
+    right_stair_y = map_height//2 - stair_room_dim//2
+    right_stair_room = RectangularRoom(right_stair_x,right_stair_y,stair_room_dim,stair_room_dim)
+
+    dungeon.tiles[right_stair_room.inner] = floor
+    dungeon.tiles[right_stair_room.center[0]-stair_room_dim//2,right_stair_room.center[1]] = door
+    factory.down_staircase.spawn(dungeon,*right_stair_room.center)
+    
+    engine.player.place(*right_stair_room.center, dungeon)
+    
+    return dungeon
+
+def deepest_zone(engine: Engine,map_width,map_height): 
+    floor = tiles.new_floor(color.earth_light,color.earth_dark)
+    wall = tiles.new_wall(color.wood_light,color.wood_dark)
+    door = tiles.new_door(color.earth_light,color.wood_light,color.earth_dark,color.wood_dark)
+    
+    
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player],wall=wall)
+    stair_room_dim = 6
+
+    left_stair_x = map_width//6 - stair_room_dim//2
+    left_stair_y = map_height//2 - stair_room_dim//2
+    left_stair_room = RectangularRoom(left_stair_x,left_stair_y,stair_room_dim,stair_room_dim)
+
+    dungeon.tiles[left_stair_room.inner] = floor
+    dungeon.tiles[left_stair_x + stair_room_dim,left_stair_room.center[1]] = door
+    factory.up_staircase.spawn(dungeon,*left_stair_room.center)
+    engine.player.place(*left_stair_room.center, dungeon)
+    return dungeon
+
+def initial_zone(engine: Engine,goingUp,map_width,map_height):
+    
+    floor = tiles.new_floor(color.earth_light,color.earth_dark)
+    wall = tiles.new_wall(color.stone_grey,color.stone_grey_darker)
+    door = tiles.new_door(color.earth_light,color.stone_grey,color.earth_dark,color.stone_grey_darker)
+    
+
+    dungeon = GameMap(engine, map_width, map_height, entities=[engine.player],wall=wall)
+
+    stair_room_dim = 6
+
+    left_stair_x = map_width//6*3 - stair_room_dim//2
+    left_stair_y = map_height//2 - stair_room_dim//2
+    left_stair_room = RectangularRoom(left_stair_x,left_stair_y,stair_room_dim,stair_room_dim)
+
+    dungeon.tiles[left_stair_room.inner] = floor
+    dungeon.tiles[left_stair_x + stair_room_dim,left_stair_room.center[1]] = door
+
+    right_stair_x = map_width//6*4 - stair_room_dim//2
+    right_stair_y = left_stair_y
+    right_stair_room = RectangularRoom(right_stair_x,right_stair_y,stair_room_dim,stair_room_dim)
+
+    dungeon.tiles[right_stair_room.inner] = floor
+    dungeon.tiles[right_stair_room.center[0]-stair_room_dim//2,right_stair_room.center[1]] = door
+    hall_width =right_stair_x- left_stair_x - stair_room_dim
+    main_hall = RectangularRoom(left_stair_x + stair_room_dim,left_stair_y+1,hall_width,4)
+    dungeon.tiles[main_hall.inner] = floor
+
+    factory.down_staircase.spawn(dungeon,*right_stair_room.center)
+    factory.up_staircase.spawn(dungeon,*left_stair_room.center)
+
+    if goingUp:
+        engine.player.place(*right_stair_room.center, dungeon)
+    else:
+        engine.player.place(*left_stair_room.center, dungeon)
+    return dungeon
+
 def generate_level(
     room_min_size: int,
     room_max_size: int,
     map_width: int,
     map_height: int,
     engine: Engine,
-    level: int,
-    goingUp: bool 
+    goingUp: bool,
+    level: int 
 )-> GameMap:
     """Generate a new dungeon map of the selected floor."""
-    player = engine.player
-    dungeon = GameMap(engine, map_width, map_height, entities=[player])
-    stair_room_dim = 6
     
+    
+    if level == 0:
+        return initial_zone(engine,goingUp,map_width,map_height)
+    if level == 5:
+        pass
+    if level == -5:
+        pass
+    if level > 0:
+        floor = tiles.new_floor(color.stone_grey_light,color.stone_grey_dark)
+        wall = tiles.new_wall(color.stone_grey,color.stone_grey_darker)
+        door = tiles.new_door(color.stone_grey_light,color.stone_grey,color.stone_grey_dark,color.stone_grey_darker)
+    else:
+        floor = tiles.new_floor(color.earth_light,color.earth_dark)
+        wall = tiles.new_wall(color.wood_light,color.wood_dark)
+        door = tiles.new_door(color.earth_light,color.wood_light,color.earth_dark,color.wood_dark)
+    
+    
+    player = engine.player
+    dungeon = GameMap(engine, map_width, map_height, entities=[player],wall=wall)
+    stair_room_dim = 6
+
     left_stair_x = map_width//6 - stair_room_dim//2
     left_stair_y = map_height//2 - stair_room_dim//2
     left_stair_room = RectangularRoom(left_stair_x,left_stair_y,stair_room_dim,stair_room_dim)
 
-    dungeon.tiles[left_stair_room.inner] = tiles.new_floor()
-    dungeon.tiles[left_stair_x + stair_room_dim,left_stair_room.center[1]] = tiles.new_door()
+    dungeon.tiles[left_stair_room.inner] = floor
+    dungeon.tiles[left_stair_x + stair_room_dim,left_stair_room.center[1]] = door
 
     right_stair_x = map_width//6*5 - stair_room_dim//2
     right_stair_y = left_stair_y
     right_stair_room = RectangularRoom(right_stair_x,right_stair_y,stair_room_dim,stair_room_dim)
 
-    dungeon.tiles[right_stair_room.inner] = tiles.new_floor()
-    dungeon.tiles[right_stair_room.center[0]-stair_room_dim//2,right_stair_room.center[1]] = tiles.new_door()
+    dungeon.tiles[right_stair_room.inner] = floor
+    dungeon.tiles[right_stair_room.center[0]-stair_room_dim//2,right_stair_room.center[1]] = door
     hall_width =right_stair_x- left_stair_x - stair_room_dim
     main_hall = RectangularRoom(left_stair_x + stair_room_dim,left_stair_y+1,hall_width,4)
-    dungeon.tiles[main_hall.inner] = tiles.new_floor()
+    dungeon.tiles[main_hall.inner] = floor
+    place_entities(main_hall,dungeon,level) # twice because its so big
+    place_entities(main_hall,dungeon,level)
 
     north_placed_rooms = [main_hall]
     south_placed_rooms = [main_hall]
@@ -62,6 +160,7 @@ def generate_level(
     
     leftmost_x = left_stair_x + stair_room_dim + room_min_size//2
     leftmost_y = left_stair_y - room_min_size//2
+    
     
 
     for i in range(n_tries):
@@ -72,7 +171,7 @@ def generate_level(
                                 right_stair_x - 1 - room_min_size//2,
                                 left_stair_y - room_min_size//2, 
                                 n_center_candidates)
-        generate_more_rooms(dungeon,north_placed_rooms,center_candidates,room_min_size,room_max_size)
+        generate_more_rooms(dungeon,north_placed_rooms,center_candidates,room_min_size,room_max_size,level,floor,door)
         
         #south
         center_candidates =generate_candidate_points(
@@ -81,26 +180,27 @@ def generate_level(
                                 right_stair_x - 1 - room_min_size//2,
                                 dungeon.height - room_min_size//2, 
                                 n_center_candidates)
-        generate_more_rooms(dungeon,south_placed_rooms,center_candidates,room_min_size,room_max_size)
+        generate_more_rooms(dungeon,south_placed_rooms,center_candidates,room_min_size,room_max_size, level,floor,door)
 
         
         
     for roomA in north_placed_rooms:
         for roomB in north_placed_rooms:
             if roomA is not roomB:
-                door = roomA.touchMiddlePoint(roomB)
-                if door is not None:
+                door_xy = roomA.touchMiddlePoint(roomB)
+                if door_xy is not None:
                     print("connecting adjacent rooms..")
-                    dungeon.tiles[door] = tiles.new_door()
+                    dungeon.tiles[door_xy] = door
     
     for roomA in south_placed_rooms:
         for roomB in south_placed_rooms:
             if roomA is not roomB:
-                door = roomA.touchMiddlePoint(roomB)
-                if door is not None:
+                door_xy = roomA.touchMiddlePoint(roomB)
+                if door_xy is not None:
                     print("connecting adjacent rooms..")
-                    dungeon.tiles[door] = tiles.new_door()
+                    dungeon.tiles[door_xy] = door
 
+    place_equipment(north_placed_rooms + south_placed_rooms,dungeon,level)
 
     print(len(north_placed_rooms)+len(south_placed_rooms)-2)
 
@@ -112,8 +212,35 @@ def generate_level(
         player.place(*left_stair_room.center, dungeon)
     return dungeon
 
+def place_equipment(rooms : list[RectangularRoom],dungeon,level):
+    
+    if level == 4:
+        eq_to_place = factory.nice_sword
+    elif level == 3:
+        eq_to_place = factory.nice_outfit
+    elif level == 2:
+        eq_to_place = factory.broken_sword
+    elif level == 1:
+        eq_to_place = factory.worn_outfit
+    elif level == 0:
+        return
+    elif level == -1:
+        eq_to_place = factory.amulet_health
+    elif level == -2:
+        eq_to_place = factory.wooden_staff
+    elif level == -3:
+        eq_to_place = factory.amulet__great_health
+    elif level == -4:
+        eq_to_place = factory.nice_staff
 
-def generate_more_rooms(dungeon : GameMap, placed_rooms: list[RectangularRoom],center_candidates : list[Point],room_min_size,room_max_size):
+    if hasattr(eq_to_place,"parent") and eq_to_place.inInventory:
+        return
+    room = random.choice(rooms)
+    eq_to_place.place(*room.center,dungeon)
+
+
+
+def generate_more_rooms(dungeon : GameMap, placed_rooms: list[RectangularRoom],center_candidates : list[Point],room_min_size,room_max_size,level,floor,door):
     
     current_room = placed_rooms[random.randint(0,len(placed_rooms)-1)]
     while len(center_candidates) > 0:
@@ -150,13 +277,13 @@ def generate_more_rooms(dungeon : GameMap, placed_rooms: list[RectangularRoom],c
         if next_room.y1 <= 0 or next_room.x1 <=0 or next_room.y2 > dungeon.height or next_room.x2 > dungeon.width :
             print(f"candidate discarded for going out of bounds")
             continue
-        dungeon.tiles[next_room.inner] = tiles.new_floor()
+        dungeon.tiles[next_room.inner] = floor
         if not next_room.touching(current_room):
             print(f"candidate discarded for not touching")
             continue
-        dungeon.tiles[current_room.touchMiddlePoint(next_room)] = tiles.new_door()
+        dungeon.tiles[current_room.touchMiddlePoint(next_room)] = door
         print(current_room.touchMiddlePoint(next_room))
-        place_entities(next_room,dungeon,5, 5)
+        place_entities(next_room,dungeon,level)
         placed_rooms.append(next_room)
         current_room = next_room
 
@@ -222,33 +349,63 @@ def generate_dungeon(
 
     return dungeon
 
-def place_entities(room: RectangularRoom, dungeon: GameMap, maximum_monsters: int, maximum_items: int
+def place_entities(room: RectangularRoom, dungeon: GameMap, level
 ) -> None:
-    number_of_monsters = random.randint(0, maximum_monsters)
-    number_of_items = random.randint(0,maximum_items)
+    """
+    objetos en el suelo siempre:
+    arriba: piedras
+    abajo: setitas(comida)
 
-    for i in range(number_of_monsters):
+    drops random para enemigos:
+    rata: comida(no siempre)
+    seta: seta(siempre)
+    skeleto: scroll simple(no siempre)
+    boca: comida(no siempre) diente(se tira)
+    wizzo: scroll simple(siempre), scroll guay( a veces)
+
+    """
+    debris = None
+    if level > 0:
+        debris = factory.rock
+    if level < 0:
+        debris = factory.little_shroom
+    if debris:
+        for i in range(room.area//100):
+            x = random.randint(room.x1 + 1, room.x2 - 1)
+            y = random.randint(room.y1 + 1, room.y2 - 1)
+            debris.spawn(dungeon,x,y)
+
+    monster_choices = []
+    if level == 5:
+        pass
+    elif level > 2:
+        min_monsters = 3
+        max_monsters = 10
+        monster_choices =random.choices(factory.actorList,weights=factory.A_WeightUp_3_4,k=random.randint(min_monsters, max_monsters))
+       
+    elif level > 0:
+        min_monsters = 1
+        max_monsters = 4
+        monster_choices =random.choices(factory.actorList,weights=factory.A_WeightUp_1_2,k=random.randint(min_monsters, max_monsters))
+        
+    elif level == 0:
+        pass
+    elif level >= -2:
+        min_monsters=1
+        max_monsters = 4
+        monster_choices =random.choices(factory.actorList,weights=factory.A_WeightDown_1_2,k=random.randint(min_monsters, max_monsters))
+
+    elif level > -5:
+        min_monsters = 3
+        max_monsters = 10
+        monster_choices =random.choices(factory.actorList,weights=factory.A_WeightDown_3_4,k=random.randint(min_monsters, max_monsters))
+
+    else:# level == -10
+        pass
+
+    for m in monster_choices:
         x = random.randint(room.x1 + 1, room.x2 - 1)
         y = random.randint(room.y1 + 1, room.y2 - 1)
+        m.spawn(dungeon,x,y)
 
-        if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
-            if random.random() < 0.8:
-                factory.weak_skuly.spawn(dungeon,x,y)
-            else:
-                factory.rat_small.spawn(dungeon,x,y)
-
-    for i in range(number_of_items):
-        x = random.randint(room.x1 + 1, room.x2 - 1)
-        y = random.randint(room.y1 + 1, room.y2 - 1)
-
-        if not any(entity.x == x and entity.y == y for entity in dungeon.entities):
-            item_chance = random.random()
-
-            if item_chance < 0.6:
-                factory.food.spawn(dungeon, x, y)
-            elif item_chance < 0.8:
-                factory.fireball_scroll.spawn(dungeon, x, y)
-            elif item_chance < 0.9:
-                factory.confusion_scroll.spawn(dungeon, x, y)
-            else:
-                factory.lightning_scroll.spawn(dungeon, x, y)
+    

@@ -9,6 +9,8 @@ import enums.color as ecolor
 if TYPE_CHECKING:
     from components.ai import BaseAI
     from components.fighter_component import Fighter
+    from map.game_map import GameMap
+    from classes.item import Item
 
 from components.inventory_component import Inventory, Equipment
     
@@ -37,11 +39,12 @@ class Actor(Entity):
         fighter: Fighter,
         inventory: Inventory,
         hostile: bool,
-        actor_type,
+        actor_type : Actor.Type,
         icon: str = "assets\sprites\\red_egg.png",
         blood_color = (97, 16, 16),
         interactables = None,
-        blocks_movement=True
+        blocks_movement=True,
+        loot_table : dict[str,list] = None
 
     ):
         super().__init__(
@@ -83,15 +86,28 @@ class Actor(Entity):
             self.ai = self.friendly_ai
         self.actor_type = actor_type
 
+        self.loot_table =  loot_table
+
+
     @property
     def is_alive(self) -> bool:
         """Returns True as long as this actor can perform actions."""
         return bool(self.ai)
         
     def turn_hostile(self):
-        self.hostile = True
-        self.ai = self.hostile_ai
+        if not self.hostile:
+            self.hostile = True
+            self.ai = self.hostile_ai
         
     def turn_friendly(self):
-        self.hostile=False
-        self.ai = self.friendly_ai
+        if self.hostile:
+            self.hostile=False
+            self.ai = self.friendly_ai
+
+    def drop_loot(self, gamemap: GameMap):
+ 
+        if self.loot_table:
+            import random
+            choice : list[Item] = random.choices(self.loot_table['items'],weights=self.loot_table['weights'])
+            gamemap.engine.message_log.add_message(f"The {self.name} drops {choice[0].name}")
+            choice[0].spawn(gamemap,self.x,self.y)

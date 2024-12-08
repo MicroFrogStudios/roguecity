@@ -234,7 +234,7 @@ class GameOverEventHandler(EventHandler):
         self.on_quit()
 
     def ev_keydown(self, event: tcod.event.KeyDown) -> None:
-        if event.sym == tcod.event.KeySym.ESCAPE:
+        # if event.sym == tcod.event.KeySym.ESCAPE:
             self.on_quit()
     
 CURSOR_Y_KEYS = {
@@ -340,6 +340,7 @@ class SelectedEntityHandler(AskUserEventHandler):
                  MapContextPanel.container.set_cursor(*cursor)
                  print("hovering")
                  return
+             MapContextPanel.container.current_tab.has_focus=False
     
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
         """By default any mouse click exits this input handler."""
@@ -349,6 +350,10 @@ class SelectedEntityHandler(AskUserEventHandler):
                 return MapContextPanel.container.on_confirm()
             if event.button == 3:
                 return super().ev_mousebuttondown(event)
+        
+        for b in MapContextPanel.container.tabButtons:
+            if b.hovering(self.engine) and event.button == 1:
+                b.on_click()
     
     def on_render(self, console: Console) -> None:
 
@@ -385,7 +390,6 @@ class SelectedEntityHandler(AskUserEventHandler):
                 item :Item = MapContextPanel.entities[MapContextPanel.container.tab_cursor]
                 from components.interactable_component import PickUpInteractable 
                 if item.pickUpInteractable.check_player_activable():
-                    self.engine.entities = None
                     return item.pickUpInteractable.get_action(self.engine.player.interactor)
             
             
@@ -483,7 +487,13 @@ class TabMenuHandler(AskUserEventHandler):
         for cursor, button in self.rootMenu.current_tab.menu_buttons():
              if button.hovering(self.engine):
                  self.rootMenu.current_tab.set_cursor(*cursor)
-                 return
+                 break
+        
+        for button in self.rootMenu.tabButtons:
+            if button.hovering(self.engine):
+                button.fg = color.white
+            else:
+                button.fg = button.text_color
  
  
    
@@ -659,15 +669,32 @@ class AreaRangedAttackHandler(SelectIndexHandler):
 
         x, y = self.engine.mouse_location
         x, y = self.engine.map_to_camera_coordinates(x,y)
+
+        from time import time
+        current_second = time()
+
+
         # Draw a rectangle around the targeted area, so the player can see the affected tiles.
-        console.draw_frame(
-            x=x - self.radius - 1,
-            y=y - self.radius - 1,
-            width=self.radius ** 2,
-            height=self.radius ** 2,
-            fg=color.red,
-            clear=False,
-        )
+        if int(current_second*3) % 2 != 0:
+            from math import ceil,floor, sqrt
+            radius = self.radius
+            top    =  ceil(y - radius)
+            bottom = floor(y + radius+1)
+            left   =  ceil(x - radius)
+            right  = floor(x + radius+1)
+            for j in range(top,bottom):
+                for i in range(left,right):
+                    if   sqrt((x - i) ** 2 + (y - j) ** 2) <= radius:
+                        console.print(i,j,"‼",fg=color.red)
+            
+            # console.draw_frame(
+            #     x=x - self.radius,
+            #     y=y - self.radius,
+            #     width=self.radius ** 2-1,
+            #     height=self.radius ** 2-1,
+            #     fg=color.red,
+            #     clear=False,
+            # )
 
     def on_index_selected(self, x: int, y: int) -> Optional[ActionOrHandler]:
         return self.callback((x, y))

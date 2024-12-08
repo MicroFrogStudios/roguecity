@@ -88,7 +88,7 @@ class MapContextPanel(ContextPanel):
         
         # checks if selected map entitity
         if selected:
-            cls.container.border_color = color.menu_selected
+            cls.container.border_color = color.interface_highlight
         else:
             entities = engine.check_visible_entities_on_mouse()
             if entities:

@@ -8,7 +8,7 @@ from classes.actor import Actor
 from classes.item import Item
 import config
 import map.tile_types as tile_types
-
+import factories.entity_factory as factory
 if TYPE_CHECKING:
     from classes.entity import Entity
     from engine import Engine
@@ -31,7 +31,7 @@ class GameWorld:
         room_max_size: int = 12,
         max_monsters_per_room: int = 1,
         max_items_per_room: int = 1,
-        current_floor: int = -5
+        current_floor: int = 0
     ):
         self.engine = engine
 
@@ -47,11 +47,11 @@ class GameWorld:
         self.max_items_per_room = max_items_per_room
 
         self.current_floor = current_floor
-
     
     def tutorial_map(self):
-        from map.gen.dungeon import generate_level
-        self.engine.game_map = generate_level(8,12,self.map_width, self.map_height,self.engine,5)
+        pass
+        # from map.gen.dungeon import generate_level
+        # self.engine.game_map = generate_level(8,12,self.map_width, self.map_height,self.engine)
     
     def test_world(self) -> None:
         self.engine.game_map = GameMap(self.engine, self.map_width, self.map_height, entities=[self.engine.player])
@@ -81,37 +81,24 @@ class GameWorld:
         self.generate_floor(True)
 
     def generate_floor(self, goingUp : bool) -> None:
-        from map.gen.dungeon import generate_level, generate_dungeon
+        from map.gen.dungeon import generate_level
         self.engine.game_map = generate_level(self.room_min_size,
                                               self.room_max_size,
                                               self.map_width,
                                                 self.map_height,
                                                 self.engine,
-                                                self.current_floor,
-                                                goingUp)
-    
-
-
-        # self.engine.game_map = generate_dungeon(
-        #     max_rooms=self.max_rooms,
-        #     room_min_size=self.room_min_size,
-        #     room_max_size=self.room_max_size,
-        #     map_width=self.map_width,
-        #     map_height=self.map_height,
-        #     max_monsters_per_room=self.max_monsters_per_room,
-        #     max_items_per_room=self.max_items_per_room,
-        #     engine=self.engine,
-        # )
+                                                goingUp,
+                                                self.current_floor)
 
 
 class GameMap:
 
-    def __init__(self, engine: Engine, width: int, height: int, entities: Iterable[Entity] = ()):
+    def __init__(self, engine: Engine, width: int, height: int, entities: Iterable[Entity] = (),wall=tile_types.new_wall()):
         self.engine = engine
         self.width, self.height = width, height
         self.entities = set(entities)
         self.tiles = np.full(
-            (width, height), fill_value=tile_types.new_wall(), order="F")
+            (width, height), fill_value=wall, order="F")
 
         # Tiles the player can currently see
         self.visible = np.full((width, height), fill_value=False, order="F")

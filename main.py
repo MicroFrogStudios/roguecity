@@ -31,46 +31,47 @@ def main():
 
     
     FLAGS = tcod.context.SDL_WINDOW_RESIZABLE | tcod.context.SDL_WINDOW_MAXIMIZED
-    handler: input_handlers.BaseEventHandler = setup.MainMenu()
+    
+    while True:
+        handler: input_handlers.BaseEventHandler = setup.MainMenu()
 
-    with tcod.context.new(
+        with tcod.context.new(
 
-        tileset=tileset,
-        title="Rogue City project",
-        vsync=True,
-        sdl_window_flags=FLAGS
-    ) as context:
-        root_console = tcod.console.Console(config.screen_width, config.screen_height, order="F")
-        try:
-            current_task : Optional[PlayerAI] = None
-            while True:
-                root_console.clear()
-                handler.on_render(console=root_console)
-                context.present(root_console,keep_aspect=True, integer_scaling=True)
-                
-                try:
+            tileset=tileset,
+            title="Rogue City project",
+            vsync=True,
+            sdl_window_flags=FLAGS
+        ) as context:
+            root_console = tcod.console.Console(config.screen_width, config.screen_height, order="F")
+            try:
+                while True:
+                    root_console.clear()
+                    handler.on_render(console=root_console)
+                    context.present(root_console,keep_aspect=True, integer_scaling=True)
                     
-                    for event in tcod.event.get():
-                        context.convert_event(event)
-                        handler = handler.handle_events(event)
-                    if hasattr(handler, "player_controller"):
-                        handler.handle_player_tasks()
-                      
-                except Exception:  # Handle exceptions in game.
-                    traceback.print_exc()  # Print error to stderr.
-                    # Then print the error to the message log.
-                    if isinstance(handler, input_handlers.EventHandler):
-                        handler.engine.message_log.add_message(
-                            traceback.format_exc(), color.error
-                        )
-        except exceptions.QuitWithoutSaving:
-            raise
-        except SystemExit:  # Save and quit.
-            save_game(handler, "savegame.sav")
-            raise
-        except BaseException:  # Save on any other unexpected exception.
-            save_game(handler, "savegame.sav")
-            raise
+                    try:
+                        
+                        for event in tcod.event.get():
+                            context.convert_event(event)
+                            handler = handler.handle_events(event)
+                        if hasattr(handler, "player_controller"):
+                            handler.handle_player_tasks()
+                        
+                    except Exception:  # Handle exceptions in game.
+                        traceback.print_exc()  # Print error to stderr.
+                        # Then print the error to the message log.
+                        if isinstance(handler, input_handlers.EventHandler):
+                            handler.engine.message_log.add_message(
+                                traceback.format_exc(), color.error
+                            )
+            except exceptions.QuitWithoutSaving:
+                continue
+            except SystemExit:  # Save and quit.
+                save_game(handler, "savegame.sav")
+                raise
+            except BaseException:  # Save on any other unexpected exception.
+                save_game(handler, "savegame.sav")
+                raise
 
 
 def save_game(handler: input_handlers.BaseEventHandler, filename: str) -> None:

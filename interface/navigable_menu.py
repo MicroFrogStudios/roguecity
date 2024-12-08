@@ -68,13 +68,13 @@ class TabContainer(Container):
         for i, tab in enumerate(self.tabs):
             tab.parent = self
             tab_width = len(tab.name)+2
-            self.tabButtons.append(Button(x=self.x,y = self.y,height=3,width=tab_width,title=tab.name,on_click=lambda n=i: self.set_cursor(z=n))
+            self.tabButtons.append(Button(x=self.x,y = self.y,height=3,width=tab_width,title=tab.name,on_click=lambda n=i: self.set_cursor(z=n),framed=False)
 )
         self.tab_cursor = tab_cursor
         
         
     def render(self,console: Console, engine: Engine):
-        console.draw_frame(self.x,self.y,self.width,self.height,bg=color.black,clear=True)
+        console.draw_frame(self.x,self.y,self.width,self.height,bg=color.black,fg=color.interface_lowlight,clear=True)
         width_acc = 0
         for i, tab in enumerate(self.tabs):
             
@@ -82,16 +82,18 @@ class TabContainer(Container):
             self.tabButtons[i].x = self.x+ width_acc
                 
             if i == self.tab_cursor:
-                self.tabButtons[i].decoration = "┌─┐│ ││ │"
-                self.tabButtons[i].fg=color.white
-                console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width,decoration="┌─┐│ ││ │")
+                self.tabButtons[i].underscore = True
+                # self.tabButtons[i].decoration = "┌─┐│ ││ │"
+                # self.tabButtons[i].fg=color.white
+                # console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width,decoration="┌─┐│ ││ │")
                 # console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=tab.name,fg=color.button_text,alignment=libtcodpy.CENTER)
                 tab.render(console,engine)
             else:
+                self.tabButtons[i].underscore = False
                 # console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width)
                 # console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=tab.name,alignment=libtcodpy.CENTER)
-                self.tabButtons[i].decoration = "┌─┐│ │└─┘"
-                self.tabButtons[i].fg=color.button_color
+                # self.tabButtons[i].decoration = "┌─┐│ │└─┘"
+                # self.tabButtons[i].fg=color.button_color
                 
             self.tabButtons[i].render(console,engine)
               
@@ -168,6 +170,7 @@ class ContextPanelMenu(BaseMenu):
 
     def __init__(self,x,y,width, entity: Entity, engine :Engine = None, padding=1,navigable=False,parent=None) -> None:
         submenus :list[SubMenu] = [
+            Textbox(entity.name,self),
             Imagebox(entity.icon, self),
             Textbox(entity.description, self),
             ]
@@ -186,9 +189,12 @@ class ContextPanelMenu(BaseMenu):
             buttons = [Button(0,0,
                               inter.name,disabled=not inter.check_player_activable(),
                               on_click=lambda i = inter : i.get_action(engine.player.interactor)) for inter in entity.get_interactables()]
-            self.buttons = ButtonMatrix(self,buttons)
-            submenus.append(self.buttons)
-            self.has_focus = False
+            if buttons:
+                self.buttons = ButtonMatrix(self,buttons)
+                submenus.append(self.buttons)
+                self.has_focus = False
+            else:
+                self.navigable = False
          
         
         height = 1
@@ -201,7 +207,7 @@ class ContextPanelMenu(BaseMenu):
     
     def render(self, console: Console, engine: Engine):
         if self.parent is None:
-            console.draw_frame(x=self.x, y=self.y, width=self.width, height=self.height,title=self.name,clear=True,fg=color.menu_border,bg=color.black )
+            console.draw_frame(x=self.x, y=self.y, width=self.width, height=self.height,clear=True,fg=color.menu_border,bg=color.black )
         for sub in self.submenus:
             sub.render(console,engine)
    
@@ -232,7 +238,7 @@ class ContextPanelMenu(BaseMenu):
         super().reposition(height=height)
                 
 class MapContextContainer(Container):
-    def __init__(self, entities, engine, x=0, y=0, width=config.screen_width, height=config.screen_height) -> None:
+    def __init__(self, entities :list[Entity], engine, x=0, y=0, width=config.screen_width, height=config.screen_height) -> None:
         super().__init__(x,y,width,height)
         self.entities :list[Entity] = entities
         self.tab_cursor = 0
@@ -240,6 +246,10 @@ class MapContextContainer(Container):
         self.current_tab : ContextPanelMenu = ContextPanelMenu(self.x,self.y+3,self.width,self.entities[self.tab_cursor],engine,navigable=True,parent=self)
         self.height = self.current_tab.height+3
         self.border_color = color.menu_border
+        self.tabButtons: list[Button] = []
+        for i, entity in enumerate(self.entities):
+            self.tabButtons.append(Button(x=self.x,y = self.y+1,height=2,width=1,title="?",on_click=lambda n=i: self.set_cursor(z=n),framed=False)
+)
     
     def navigate(self, dx, dy,dz=0):
         if dz != 0:
@@ -259,13 +269,25 @@ class MapContextContainer(Container):
         for i, entity in enumerate(self.entities):
             
             tab_width = len(entity.char)+2
+            tab_x = self.x+ width_acc+tab_width//2
+            self.tabButtons[i].x = self.x+ width_acc
             if i == self.tab_cursor:
-                console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width,decoration="┌─┐│ ││ │")
-                console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=entity.char,fg=entity.fgColor,alignment=libtcodpy.CENTER)
+                # console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width,decoration="       ─ ")
+                console.print(x=tab_x,y = self.y+1,string=entity.char,fg=entity.fgColor,alignment=libtcodpy.CENTER)
+                console.print(x=tab_x,y = self.y+1+1,string='─',fg=self.border_color,alignment=libtcodpy.CENTER)
+                
                 self.current_tab.render(console,engine)
             else:
-                console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width)
+                # console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width)
                 console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=entity.char,fg=entity.fgColor,alignment=libtcodpy.CENTER)
+            
+            # if i == self.tab_cursor:
+            #     console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width,decoration="┌─┐│ ││ │")
+            #     console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=entity.char,fg=entity.fgColor,alignment=libtcodpy.CENTER)
+            #     self.current_tab.render(console,engine)
+            # else:
+            #     console.draw_frame(x=self.x+ width_acc,y = self.y,height=3,width=tab_width)
+            #     console.print(x=self.x+ width_acc+tab_width//2,y = self.y+1,string=entity.char,fg=entity.fgColor,alignment=libtcodpy.CENTER)
             
               
             width_acc += tab_width
@@ -273,8 +295,13 @@ class MapContextContainer(Container):
     def on_confirm(self):
         return self.current_tab.on_confirm()
     
-    def set_cursor(self,x,y):
-        self.current_tab.set_cursor(x,y)
+    def set_cursor(self,x=None,y=None,z=None):
+        if x is not None and y is not None:
+            self.current_tab.set_cursor(x,y)
+        if z is not None:
+            self.tab_cursor = z
+            self.current_tab = ContextPanelMenu(self.x,self.y+3,self.width,self.entities[self.tab_cursor],self.engine,navigable=True,parent=self)
+            self.height = self.current_tab.height+3
         
     def menu_buttons(self) -> list[tuple[tuple[int, int], Button]]:
         return self.current_tab.menu_buttons()
@@ -496,7 +523,7 @@ class ButtonMatrix(SubMenu):
                 if  j == self.cursor_x and i == self.cursor_y and self.parent.has_focus:
                     b.fg = color.button_hover
                 else:
-                    b.fg = color.button_color
+                    b.fg = b.text_color
                 b.render(console,engine)
         
 class EquipStatBlock(SubMenu):
@@ -589,17 +616,17 @@ class Imagebox(SubMenu):
         
 
 class Textline(SubMenu):
-    def __init__(self,text,parent,align = libtcodpy.CENTER,fg =color.menu_title,bg = None) -> None:
+    def __init__(self,text,parent,align = libtcodpy.LEFT,fg =color.interface_highlight,bg = None, padding = 1) -> None:
         super().__init__(parent)
         self.text = text
         self.align = align
         self.fg = fg
         self.bg = bg
         self.height = 1
-        
+        self.padding = padding
         
     def render(self, console: Console, engine: Engine, selected=False) -> None:
-        console.print(self.x,self.y,self.text,fg=self.fg,bg=self.bg,alignment=self.align)
+        console.print(self.x + self.padding,self.y,self.text,fg=self.fg,bg=self.bg,alignment=self.align)
 
 class Textbox(SubMenu):
     
@@ -641,9 +668,9 @@ class SingleOptionSubMenu(SubMenu):
         self.button.x = self.x -self.button.width//2
         self.button.y = self.y
         if selected:
-            self.button.text_color = color.button_hover
+            self.button.fg = color.white
         else:
-            self.button.text_color = color.button_text
+            self.button.fg = self.button.text_color
         self.button.render(console,engine)
         
         

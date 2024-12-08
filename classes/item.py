@@ -1,6 +1,7 @@
 from __future__ import annotations
  
 
+from enum import Enum
 from typing import Callable, Optional, Tuple, TYPE_CHECKING
 if TYPE_CHECKING:
     from actions import Action
@@ -12,6 +13,14 @@ from enums.render_order import RenderOrder
 
 
 class Item(Entity):
+
+    class Type(Enum):
+        FOOD = "FOOD"
+        SCROLL = "SCROLL"
+        EQUIP = "EQUIP"
+        KEY = "KEY"
+        OTHER = "OTHER"
+
     def __init__(
         self,
         *,
@@ -23,6 +32,7 @@ class Item(Entity):
         description: str = "<Missing Description>",
         icon : str = "assets\sprites\\red_egg.png",
         interactables : list[Interactable] = [],
+        item_type: Item.Type = Type.OTHER
     ):
         super().__init__(
             x=x,
@@ -38,6 +48,7 @@ class Item(Entity):
             
         )
         
+        self.item_type : Item.Type = item_type
         self.pickUpInteractable = PickUpInteractable()
         self.pickUpInteractable.parent = self
         
