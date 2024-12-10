@@ -38,7 +38,7 @@ rock = Item(
     color=color.stone_grey_dark,
     name="Round rock",
     icon="assets/sprites/rock.png",
-    interactables=[interactables.throwInteraction(0)],
+    interactables=[interactables.ThrowInteraction(0)],
     description= "good for throwing",
     item_type= Item.Type.OTHER
 
@@ -48,7 +48,7 @@ teeth = Item(
     color=color.bone_light,
     name="Sharp tooth",
     icon="assets/sprites/teef.png",
-    interactables=[interactables.throwInteraction(2)],
+    interactables=[interactables.ThrowInteraction(2)],
     description= "can be thrown like a dart",
     item_type= Item.Type.OTHER
 
@@ -58,6 +58,7 @@ lightning_scroll = Item(
     char="~",
     color=(255, 255, 0),
     name="Lightning Scroll",
+    description="Strikes the closest entity in range with a lightning bolt.",
     interactables=[interactables.LightningDamageConsumable(damage=5, maximum_range=5)],
     icon="assets/sprites/scroll_basic.png",
     item_type=Item.Type.SCROLL
@@ -66,17 +67,47 @@ lightning_scroll = Item(
 confusion_scroll = Item(
     char="~",
     color=(207, 63, 255),
+    description="Confuses enemies in an area, forcing them to tumble aimlessly",
     name="Confusion Scroll",
-    interactables=[interactables.ConfusionConsumable(number_of_turns=5)],
+    interactables=[interactables.ConfusionConsumable(number_of_turns=5,radius=2)],
     icon="assets/sprites/scroll_basic.png",
     item_type=Item.Type.SCROLL
 )
 
+teleport_scroll = Item(
+    char="~",
+    color=color.magic_green,
+    name="Teleport Scroll",
+    description="Teleports you to a previously explored place",
+    interactables=[interactables.TeleportConsumable()],
+    icon="assets/sprites/scroll_basic.png",
+    item_type=Item.Type.SCROLL
+)
+
+freeze_scroll = Item(
+    char="~",
+    color=color.cold_blue,
+    name="Freeze Scroll",
+    description="Freezes a target in place until it is attacked",
+    interactables=[interactables.FreezeConsumable()],
+    icon="assets/sprites/scroll_basic.png",
+    item_type=Item.Type.SCROLL
+)
 fireball_scroll = Item(
     char="~",
     color=(255, 0, 0),
     name="Fireball Scroll",
-    interactables=[interactables.FireballDamageConsumable(damage=5, radius=5)],
+    description="Cast a ball of fire that explodes in an area, dealing damage to everything in it.",
+    interactables=[interactables.FireballDamageConsumable(damage=4, radius=3)],
+    icon="assets/sprites/scroll_basic.png",
+    item_type=Item.Type.SCROLL
+)
+invisibility_scroll = Item(
+    char="~",
+    color=(200, 200, 200),
+    name="Invisibility Scroll",
+    description="Turns yourself invisible for a number of turns.",
+    interactables=[interactables.InvisibleConsumable(number_of_turns=10)],
     icon="assets/sprites/scroll_basic.png",
     item_type=Item.Type.SCROLL
 )
@@ -106,7 +137,7 @@ broken_sword = Equipable(
 
 nice_sword = Equipable(
     char="/",
-    color=color.gray,
+    color=color.white,
     name="Iron sword",
     description="Simpe sword in good condition.",
     eq_type=eq.Type.WEAPON,
@@ -127,7 +158,7 @@ worn_outfit = Equipable(
 
 nice_outfit = Equipable(
     char="[",
-    color=color.gray,
+    color=color.dark_gray,
     name="cloaked outfit",
     description="lost cloak that makes for a sturdy and comfy outfit.",
     eq_type=eq.Type.ARMOR,
@@ -162,7 +193,7 @@ wooden_staff = Equipable(
     char="⌠",
     color=color.gray,
     name="Wooden staff",
-    description="A simple wooden staff",
+    description="A simple wooden staff. Enhances your magic",
     eq_type=eq.Type.STAFF,
     magic_bonus=1,
     icon="assets/sprites/simple_staff.png"
@@ -170,9 +201,9 @@ wooden_staff = Equipable(
 
 nice_staff = Equipable(
     char="⌠",
-    color=color.gray,
+    color=color.white,
     name="Ominous staff",
-    description="A glowing wooden staff",
+    description="A glowing wooden staff, greatly enhances your magic",
     eq_type=eq.Type.STAFF,
     magic_bonus=3,
     icon="assets/sprites/simple_staff.png"
@@ -225,7 +256,7 @@ lost_warrior =  Actor(
 
 wizzo = Actor(
     char="A",
-    color=color.magic_purple,
+    color=color.magic_purple_light,
     name="wizzo",
     description= "Strange apparition possessing arcane powers.",
     hostile=True,
@@ -237,12 +268,13 @@ wizzo = Actor(
     blood_color=color.magic_green,
     interactables=[interactables.ScareInteraction()],
     icon= "assets\sprites\wizzo.png",
-    loot_table={"items":  [lightning_scroll, fireball_scroll,confusion_scroll],
-                "weights":[0.5,             0.5,                0.5]}
+    loot_chance = (1,1),
+    loot_table={"items":  [lightning_scroll, teleport_scroll,confusion_scroll,fireball_scroll,freeze_scroll,invisibility_scroll],
+                "weights":[0.3,             0.3,                0.3,            0.03,           0.03,       0.03]}
 )
 archwizzo = Actor(
     char="Å",
-    color=color.magic_purple,
+    color=color.magic_purple_light,
     blood_color=color.magic_green,
     name="arch wizzo",
     description= "Strange apparition possessing arcane powers.",
@@ -254,8 +286,9 @@ archwizzo = Actor(
     inventory=Inventory(capacity=2),
     interactables=[interactables.ScareInteraction()],
     icon= "assets\sprites\wizzo.png",
-    loot_table={"items":  [lightning_scroll, fireball_scroll,confusion_scroll],
-                "weights":[0.33,             0.33,                0.33]}
+    loot_chance = (1,3),
+   loot_table={"items":  [lightning_scroll, fireball_scroll,confusion_scroll,teleport_scroll,freeze_scroll,invisibility_scroll],
+                "weights":[0.25,             0.5,                0.25,          0.25,           0.5,        0.5]}
 )
 
 hungryhead =  Actor(
@@ -271,8 +304,9 @@ hungryhead =  Actor(
     inventory=Inventory(capacity=2),
     interactables=[interactables.GiveFood()],
     icon= "assets\sprites\hungryhead.png",
-    loot_table={"items":  [food, teeth],
-                "weights":[0.1,  1]}
+    loot_chance= (1,2),
+    loot_table={"items":  [food, teeth,lightning_scroll],
+                "weights":[2,    7,    1]}
 )
 
 hungryhead_shiny =  Actor(
@@ -284,12 +318,13 @@ hungryhead_shiny =  Actor(
     actor_type=Actor.Type.MONSTER,
     friendly_ai=ai.RandomGait(5),
     hostile_ai=ai.HostileEnemy(),
-    fighter=Fighter(hp=25, defense=2, power=5,magic=2),
+    fighter=Fighter(hp=15, defense=2, power=5,magic=2),
     inventory=Inventory(capacity=2),
     interactables=[interactables.GiveFood()],
     icon= "assets\sprites\hungryhead.png",
-    loot_table={"items":  [food, teeth],
-                "weights":[0.1,  1]}
+    loot_chance= (1,2),
+    loot_table={"items":  [food, teeth, lightning_scroll, fireball_scroll],
+                "weights":[2,    4,     1,                0.1]}
 )
 
 weak_skuly = Actor(
@@ -301,11 +336,14 @@ weak_skuly = Actor(
     actor_type=Actor.Type.MONSTER,
     friendly_ai=ai.RandomGait(3),
     hostile_ai=ai.HostileEnemy(),
-    fighter=Fighter(hp=2, defense=0, power=1,magic=0),
+    fighter=Fighter(hp=2, defense=0, power=2,magic=0),
     inventory=Inventory(capacity=0),
     icon= "assets\sprites\skuly.png",
     blood_color= (120, 116, 116),
     interactables=[interactables.AssaultInteraction(cry="Shrieeek!")],
+    loot_chance=(0,1),
+    loot_table={"items":  [teleport_scroll, confusion_scroll, lightning_scroll, teeth],
+                "weights":[0.3,              0.3,               0.3,             0.01]}
     
 )
 
@@ -318,13 +356,14 @@ strong_skuly = Actor(
     actor_type=Actor.Type.MONSTER,
     friendly_ai=ai.RandomGait(5),
     hostile_ai=ai.HostileEnemy(),
-    fighter=Fighter(hp=10, defense=1, power=3,magic=0),
+    fighter=Fighter(hp=5, defense=1, power=4,magic=0),
     inventory=Inventory(capacity=0),
     icon= "assets\sprites\skuly.png",
     blood_color= (120, 116, 116),
     interactables=[interactables.AssaultInteraction(cry="Shrieeek!")],
-    loot_table={"items":  [fireball_scroll, confusion_scroll, lightning_scroll, teeth],
-                "weights":[0.3,              0.4,               0.4,             0.01]}
+    loot_chance=(1,2),
+    loot_table={"items":  [fireball_scroll, confusion_scroll, lightning_scroll, freeze_scroll,teleport_scroll,invisibility_scroll],
+                "weights":[1,               2,                2,                1,              2,              2]}
 )
 shroomed = Actor(
     char="♠",
@@ -334,10 +373,14 @@ shroomed = Actor(
     actor_type=Actor.Type.CRITTER,
     description="Walking mushroom, very shy, might be tasty...",
     friendly_ai=ai.RandomGait(2),
-    hostile_ai= ai.FleeingEnemy(),
-    fighter=Fighter(hp=5, defense=0, power=0,magic=1),
+    hostile_ai= ai.HostileEnemy(),
+    fighter=Fighter(hp=5, defense=0, power=1,magic=1),
     inventory=Inventory(capacity=0),
     interactables=[interactables.BiteInteraction()],
+    loot_chance=(0,1),
+    loot_table={"items":  [little_shroom,confusion_scroll,invisibility_scroll],
+                "weights":[3,              0.1,             0.02         ]},
+
     icon= "assets/sprites/shroomed.png",
 )
 rat_small = Actor(
@@ -353,6 +396,7 @@ rat_small = Actor(
     inventory=Inventory(capacity=0),
     interactables=[interactables.TauntInteraction(response="= ò · ó ="),interactables.PetInteraction(response="= ^ · ^ =")],
     icon= "assets/sprites/raticuli.png",
+    loot_chance=(0,1),
     loot_table={"items":  [food, teeth],
                 "weights":[0.6,  0.1]}
 )

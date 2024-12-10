@@ -4,6 +4,7 @@ from typing import Optional, Tuple, TYPE_CHECKING
 
 from components.interactor_component import Interactor
 import enums.color as color
+from enums.status_effects import statusEffect
 import exceptions
 from components import ai
 if TYPE_CHECKING:
@@ -83,6 +84,8 @@ class MeleeAction(ActionWithDirection):
         if not target:
             raise exceptions.Impossible("Nothing to attack.")
 
+        if statusEffect.INVISIBLE in self.entity.fighter.status:
+            self.entity.fighter.status.remove(statusEffect.INVISIBLE)
         damage = self.entity.fighter.calc_damage(target.fighter)
         
         damage = self.entity.fighter.weapon_special_effect(self,damage)
@@ -93,7 +96,7 @@ class MeleeAction(ActionWithDirection):
         
         if self.entity is self.engine.player:
             for actor in self.engine.game_map.actors:
-                if actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
+                if not actor.fighter.status and actor is not self.engine.player and actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
                     actor.turn_hostile()
             attack_color = color.player_atk
         else:
@@ -101,10 +104,16 @@ class MeleeAction(ActionWithDirection):
         if damage > 0:
             if target is self.engine.player:
                 for actor in self.engine.game_map.actors:
-                    if actor.actor_type == self.engine.player.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
+                    if actor.actor_type == self.engine.player.actor_type and self.engine.game_map.visible[actor.x, actor.y] and self.entity.actor_type != self.engine.player.actor_type :
                         actor.ai = ai.HostileNeutral(actor,self.entity.actor_type)
+            
+            if statusEffect.FROZEN in target.fighter.status:
+                damage *= self.entity.fighter.magic_total+1
+                self.engine.message_log.add_message(f"The ice encasing {target.name} shatters, dealing x{self.entity.fighter.magic_total+1}!",attack_color)
+                target.turn_hostile()
+                target.fighter.status.remove(statusEffect.FROZEN)
             self.engine.message_log.add_message(f"{attack_desc} for {damage} hit points.",attack_color)
-            target.fighter.hp -= damage
+            target.fighter.take_damage(damage)
             if target == self.engine.player:
                 self.engine.player_controller.interrupt()
         else:

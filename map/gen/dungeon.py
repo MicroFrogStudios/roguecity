@@ -95,6 +95,12 @@ def initial_zone(engine: Engine,goingUp,map_width,map_height):
 
     factory.down_staircase.spawn(dungeon,*right_stair_room.center)
     factory.up_staircase.spawn(dungeon,*left_stair_room.center)
+    
+    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
+    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
+    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
+    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
+    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
 
     if goingUp:
         engine.player.place(*right_stair_room.center, dungeon)
@@ -117,9 +123,9 @@ def generate_level(
     if level == 0:
         return initial_zone(engine,goingUp,map_width,map_height)
     if level == 5:
-        pass
+        return highest_zone(engine,map_width,map_height)
     if level == -5:
-        pass
+        return deepest_zone(engine,map_width,map_height)
     if level > 0:
         floor = tiles.new_floor(color.stone_grey_light,color.stone_grey_dark)
         wall = tiles.new_wall(color.stone_grey,color.stone_grey_darker)
@@ -150,9 +156,9 @@ def generate_level(
     hall_width =right_stair_x- left_stair_x - stair_room_dim
     main_hall = RectangularRoom(left_stair_x + stair_room_dim,left_stair_y+1,hall_width,4)
     dungeon.tiles[main_hall.inner] = floor
-    place_entities(main_hall,dungeon,level) # twice because its so big
-    place_entities(main_hall,dungeon,level)
-
+    for i in range(abs(level)):
+        place_entities(main_hall,dungeon,level) 
+    
     north_placed_rooms = [main_hall]
     south_placed_rooms = [main_hall]
     n_tries = 20
@@ -213,7 +219,7 @@ def generate_level(
     return dungeon
 
 def place_equipment(rooms : list[RectangularRoom],dungeon,level):
-    
+    eq_to_place = None
     if level == 4:
         eq_to_place = factory.nice_sword
     elif level == 3:
@@ -233,10 +239,12 @@ def place_equipment(rooms : list[RectangularRoom],dungeon,level):
     elif level == -4:
         eq_to_place = factory.nice_staff
 
-    if hasattr(eq_to_place,"parent") and eq_to_place.inInventory:
-        return
-    room = random.choice(rooms)
-    eq_to_place.place(*room.center,dungeon)
+    
+    if eq_to_place:
+        if hasattr(eq_to_place,"parent") and eq_to_place.inInventory:
+            return
+        room = random.choice(rooms)
+        eq_to_place.place(*room.center,dungeon)
 
 
 

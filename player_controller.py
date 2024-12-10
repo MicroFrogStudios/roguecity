@@ -13,6 +13,8 @@ class PlayerController:
         self.player = player
         self.aiList :list[PlayerAI] = []
         self.current_task : Optional[PlayerAI] = None
+        self.turns_confused = 0
+        self.turns_invisible = 0
     
     def next(self) -> PlayerAI:
         return self.aiList.pop(0)

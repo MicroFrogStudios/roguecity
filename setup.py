@@ -84,12 +84,21 @@ def load_game(filename: str) -> Engine:
     assert isinstance(engine, Engine)
     return engine
 
+def menu_hover(button,x,y):
+
+    if (x > button.x + button.width or
+        x < button.x or 
+        y > button.y + button.height or 
+        y < button.y) :
+        return False
+    return True
+
 class MainMenu(input_handlers.BaseEventHandler):
     """Handle the main menu rendering and input."""
     def __init__(self):
         from interface.navigable_menu import OptionsMenu, Container
         self.engine = Engine(None)
-        self.engine.game_world = GameWorld(engine=self.engine,map_height=200,map_width=200)
+        
         self.menu = OptionsMenu("Start Menu",[
             ("Start a new Game",lambda: input_handlers.MainGameEventHandler(new_game())),
             ("Continue game",self.tryContinue),
@@ -163,10 +172,13 @@ class MainMenu(input_handlers.BaseEventHandler):
             return self.menu.on_confirm()
         return None
     
+ 
+
     def ev_mousemotion(self, event: tcod.event.MouseMotion) -> None:
         super().ev_mousemotion(event)
+        x,y = event.tile.x, event.tile.y
         for cursor, button in self.menu.menu_buttons():
-             if button.hovering(self.engine):
+             if menu_hover(button,x,y):
                  self.menu.set_cursor(*cursor)
                  return
     
@@ -174,9 +186,9 @@ class MainMenu(input_handlers.BaseEventHandler):
         """By default any mouse click exits this input handler."""
 
         """Left click confirms a selection."""
-        
+        x,y = event.tile.x, event.tile.y
         for c, b in self.menu.menu_buttons():
-            if b.hovering(self.engine) and event.button == 1:
+            if  menu_hover(b,x,y) and event.button == 1:
                 return self.menu.on_confirm()
     
     def tryContinue(self):

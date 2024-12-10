@@ -6,6 +6,7 @@ import numpy as np  # type: ignore
 import tcod
 
 from actions import Action, MeleeAction, MovementAction, WaitAction, BumpAction
+from enums.status_effects import statusEffect
 
 
 
@@ -83,12 +84,13 @@ class PlayerInteract(PlayerAI):
         
         if distance <= 1:
             self._finished = True
+            self.engine.player_controller.current_task = None
             if hasattr(self.target,"pickUpInteractable"):
                 self.target : Item
                 return self.target.pickUpInteractable.get_action(self.entity.interactor).perform()
             elif hasattr(self.target,"hostile"):
                 target : Actor = self.target
-                if target.hostile:
+                if target.hostile and target.is_alive:
                     return MeleeAction(self.entity, dx, dy).perform()
                 elif target.interactables:
                     interaction : ActorInteraction = target.interactables[0]
@@ -111,14 +113,23 @@ class PlayerPathing(PlayerAI):
         super().__init__(entity)
         self.path: List[Tuple[int, int]] = []
         self.target : Tuple[int,int] = target
-    
+        self._finished = False
     
     def finished(self):
-        return self.target is None
+        return self._finished
     def perform(self) -> None:
         """Follows the target at certain distance"""
         if self.target is None:
             return None
+        dx = self.target[0] - self.entity.x
+        dy = self.target[1] - self.entity.y
+        distance = max(abs(dx), abs(dy))  # Chebyshev distance.
+        if distance <= 1:
+            self._finished = True
+            
+        # if self.target is None:
+        #     self.engine.player_controller.current_task = None
+        #     return None
         
         self.path = self.get_path_to(self.target[0], self.target[1])
 
@@ -142,7 +153,7 @@ class HostileEnemy(BaseAI):
         dy = target.y - self.entity.y
         distance = max(abs(dx), abs(dy))  # Chebyshev distance.
 
-        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+        if self.engine.game_map.visible[self.entity.x, self.entity.y] and not statusEffect.INVISIBLE in target.fighter.status:
             if distance <= 1:
                 return MeleeAction(self.entity, dx, dy).perform()
 
@@ -170,7 +181,7 @@ class FleeingEnemy(BaseAI):
         dy = self.target.y - self.entity.y
         distance = max(abs(dx), abs(dy))  # Chebyshev distance.
 
-        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+        if self.engine.game_map.visible[self.entity.x, self.entity.y] and not statusEffect.INVISIBLE in self.target.fighter.status:
 
             self.path = self.get_path_to(self.target.x, self.target.y)
 
@@ -184,7 +195,7 @@ class FleeingEnemy(BaseAI):
         return WaitAction(self.entity).perform()
 
 
-class MageEnemy(BaseAI):#TODO
+class MageEnemy(BaseAI):
     def __init__(self, entity: Actor=None,range_dist=5,hitchance = 50):
         super().__init__(entity)
         self.path: List[Tuple[int, int]] = []
@@ -193,7 +204,7 @@ class MageEnemy(BaseAI):#TODO
         self.hitchance = hitchance
     def perform(self) -> None:
         self.target = self.engine.player
-        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+        if self.engine.game_map.visible[self.entity.x, self.entity.y] and not statusEffect.INVISIBLE in self.target.fighter.status:
             
             dx = self.target.x - self.entity.x
             dy = self.target.y - self.entity.y
@@ -241,20 +252,21 @@ class HungryEnemy(BaseAI):
                 min_dis = 20
                 for actor in self.engine.game_map.actors:
                     dis = actor.distance(self.entity.x,self.entity.y)
-                    if dis <= min_dis and actor.actor_type != self.entity.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
+                    if dis <= min_dis and actor.actor_type != self.entity.actor_type and self.engine.game_map.visible[actor.x, actor.y] and not statusEffect.INVISIBLE in actor.fighter.status:
                         self.target = actor
                         min_dis = dis
             
             if self.target is None:
-                self.entity.turn_friendly()
                 return WaitAction(self.entity).perform()
-            dx = self.target.x - self.entity.x
-            dy = self.target.y - self.entity.y
-            distance = max(abs(dx), abs(dy))  # Chebyshev distance.
-            if distance <= 1:
-                return MeleeAction(self.entity, dx, dy).perform()
+            
+            if not statusEffect.INVISIBLE in self.target.fighter.status:
+                dx = self.target.x - self.entity.x
+                dy = self.target.y - self.entity.y
+                distance = max(abs(dx), abs(dy))  # Chebyshev distance.
+                if distance <= 1:
+                    return MeleeAction(self.entity, dx, dy).perform()
 
-            self.path = self.get_path_to(self.target.x, self.target.y)
+                self.path = self.get_path_to(self.target.x, self.target.y)
 
         if self.path:
             dest_x, dest_y = self.path.pop(0)
@@ -280,7 +292,7 @@ class HostileNeutral(BaseAI):
                 min_dis = 20
                 for actor in self.engine.game_map.actors:
                     dis = actor.distance(self.entity.x,self.entity.y)
-                    if dis <= min_dis and actor.actor_type == self.target_type and self.engine.game_map.visible[actor.x, actor.y]:
+                    if dis <= min_dis and actor.actor_type == self.target_type and self.engine.game_map.visible[actor.x, actor.y] and not statusEffect.INVISIBLE in actor.fighter.status:
                         self.target = actor
                         min_dis = dis
             
@@ -304,6 +316,18 @@ class HostileNeutral(BaseAI):
         return WaitAction(self.entity).perform()
     
 
+class FrozenEnemy(BaseAI):
+    def __init__(
+        self, entity: Actor, previous_ai: Optional[BaseAI],
+        ):
+        super().__init__(entity)
+
+        self.previous_ai = previous_ai
+
+    def perform(self):
+        return WaitAction(self.entity).perform()
+    
+
 class StunnedAi(BaseAI):
 
     def __init__(
@@ -321,6 +345,7 @@ class StunnedAi(BaseAI):
                 f"The {self.entity.name} is no longer stunned."
             )
             self.entity.ai = self.previous_ai
+            self.entity.fighter.status.remove(statusEffect.STUNNED)
         else:
             
 
@@ -351,6 +376,7 @@ class ConfusedEnemy(BaseAI):
                 f"The {self.entity.name} is no longer confused."
             )
             self.entity.ai = self.previous_ai
+            self.entity.fighter.status.remove(statusEffect.CONFUSED)
         else:
             # Pick a random direction
             direction_x, direction_y = random.choice(
@@ -389,6 +415,7 @@ class FeastingEnemy(BaseAI):
             )
             self.entity.ai = self.previous_ai
             self.entity.fighter.heal(4)
+            self.entity.fighter.status.remove(statusEffect.STUNNED)
         else:
             self.turns_remaining -= 1
             
@@ -418,7 +445,7 @@ class FollowNeutral(BaseAI):
         dy = self.target.y - self.entity.y
         distance = max(abs(dx), abs(dy))  # Chebyshev distance.
 
-        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+        if self.engine.game_map.visible[self.entity.x, self.entity.y] and not statusEffect.INVISIBLE in self.target.fighter.status:
 
             self.path = self.get_path_to(self.target.x, self.target.y)
 
@@ -448,7 +475,7 @@ class CuriousCritter(BaseAI):
                 min_dis = self.radius
                 for actor in self.engine.game_map.actors:
                     distance =actor.distance(self.entity.x,self.entity.y)
-                    if distance <= min_dis and actor is not self.entity:
+                    if distance <= min_dis and actor is not self.entity and not statusEffect.INVISIBLE in actor.fighter.status:
                         self.target = actor
                         min_dis = distance
                         
@@ -460,6 +487,18 @@ class CuriousCritter(BaseAI):
                 return RandomGait(0,self.entity).perform()
             
         return WaitAction(self.entity).perform()
+
+
+class ShyGuardian(BaseAI):
+
+    def __init__(self, entity=None,radius= 20,defending_entity: Entity = None):
+        self.radius = radius
+        self.defending_entity: Entity = defending_entity
+        super().__init__(entity)
+    def perform(self) -> None:
+
+        if self.engine.game_map.visible[self.entity.x, self.entity.y]:
+            pass
 
 class RandomGait(BaseAI):
     """

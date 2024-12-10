@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from classes.actor import Actor
     from actions import Action
 from components.base_component import BaseComponent
-
+from enums.status_effects import statusEffect
 
 class Fighter(BaseComponent):
     parent: Actor
@@ -18,6 +18,7 @@ class Fighter(BaseComponent):
         self.defense = defense
         self.power = power
         self.magic = magic
+        self.status :set[statusEffect] = set()
 
     @property
     def hp(self) -> int:
@@ -59,11 +60,13 @@ class Fighter(BaseComponent):
     
     @property
     def defense_total(self):
+        if  statusEffect.FROZEN in self.status:
+            return 0
         return self.defense + self.att_bonus("defense")
     
     @property
     def hp_total(self):
-        return self.hp + self.att_bonus("hp")
+        return self.base_max_hp + self.att_bonus("hp")
     
     @property
     def magic_total(self):
@@ -129,7 +132,7 @@ class Fighter(BaseComponent):
         self.hp -= amount
     
     def calc_damage(self,enemy :Fighter):
-        return self.power + self.power_bonus - enemy.defense - enemy.defense_bonus
+        return self.power_total - enemy.defense_total
     
     def weapon_special_effect(self, action :Action, damage:int):
         

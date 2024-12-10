@@ -7,6 +7,8 @@ from tcod.console import Console
 from classes.actor import Actor
 from classes.item import Item
 import config
+from enums import color
+from enums.status_effects import statusEffect
 import map.tile_types as tile_types
 import factories.entity_factory as factory
 if TYPE_CHECKING:
@@ -183,4 +185,13 @@ class GameMap:
             # Only print entities that are in the FOV
             camera_ref_x,camera_ref_y = self.engine.map_to_camera_coordinates(entity.x,entity.y)
             if self.visible[entity.x,entity.y]:
-                console.print(camera_ref_x, camera_ref_y, entity.char, fg=entity.fgColor,bg=entity.bgColor)
+                fg = entity.fgColor
+                bg = entity.bgColor
+                char = entity.char
+                if isinstance(entity,Actor):
+                    if statusEffect.FROZEN in entity.fighter.status:
+                        bg = color.cold_blue
+                    if statusEffect.INVISIBLE in entity.fighter.status:
+                        fg = color.white
+                        char = "░"
+                console.print(camera_ref_x, camera_ref_y, char, fg=fg,bg=bg)

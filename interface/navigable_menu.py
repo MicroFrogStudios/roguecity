@@ -685,7 +685,7 @@ class MultiOptionSubMenu(SubMenu):
         self.buttons = [ Button(0,0,title,on_click=on_click)for title,on_click in zip(optionList,onSelectedList) ]
         
     def render(self,console: Console, engine: Engine,selected) -> None:
-        console.print(self.x,self.y+1,self.title)
+        console.print(self.x,self.y+1,self.title,color.interface_highlight)
         for i, b in enumerate(self.buttons):
             if selected and i == type(self).cursor:
                 b.fg = color.button_hover

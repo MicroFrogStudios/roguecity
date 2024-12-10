@@ -44,6 +44,7 @@ class Actor(Entity):
         blood_color = (97, 16, 16),
         interactables = None,
         blocks_movement=True,
+        loot_chance: tuple[int,int] = (1,1),
         loot_table : dict[str,list] = None
 
     ):
@@ -87,20 +88,20 @@ class Actor(Entity):
         self.actor_type = actor_type
 
         self.loot_table =  loot_table
+        self.loot_chance = loot_chance
 
 
     @property
     def is_alive(self) -> bool:
         """Returns True as long as this actor can perform actions."""
-        return bool(self.ai)
+        return bool(self.ai) and self.fighter._hp > 0
         
     def turn_hostile(self):
-        if not self.hostile:
+
             self.hostile = True
             self.ai = self.hostile_ai
         
     def turn_friendly(self):
-        if self.hostile:
             self.hostile=False
             self.ai = self.friendly_ai
 
@@ -108,6 +109,7 @@ class Actor(Entity):
  
         if self.loot_table:
             import random
-            choice : list[Item] = random.choices(self.loot_table['items'],weights=self.loot_table['weights'])
-            gamemap.engine.message_log.add_message(f"The {self.name} drops {choice[0].name}")
-            choice[0].spawn(gamemap,self.x,self.y)
+            for i in range(random.randint(*self.loot_chance)):
+                choice : list[Item] = random.choices(self.loot_table['items'],weights=self.loot_table['weights'])
+                gamemap.engine.message_log.add_message(f"The {self.name} drops {choice[0].name}")
+                choice[0].spawn(gamemap,self.x,self.y)

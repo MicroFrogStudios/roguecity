@@ -20,6 +20,7 @@ from actions import (
 from components.ai import  PlayerInteract, PlayerPathing
 import config
 import enums.color as color
+from enums.status_effects import statusEffect
 import exceptions
 from interface.navigable_menu import Container, InventoryMenu, TabContainer
 from interface.panels import MapContextPanel
@@ -91,28 +92,33 @@ class EventHandler(BaseEventHandler):
         self.player_controller = PlayerController.get_instance(self.engine.player)
 
     def handle_player_tasks(self):
-        if self.player_controller.current_task is None:
+        
+        if self.player_controller.current_task is not None and self.player_controller.current_task.finished():
+            self.player_controller.current_task = None
+        elif self.player_controller.current_task is None:
             if self.player_controller.hasNext():
                 self.player_controller.current_task = self.player_controller.next()
-        elif self.player_controller.current_task.finished():
-            self.player_controller.current_task = None
         else:
-            self.handle_action(self.player_controller.current_task) 
+            self.handle_action(self.player_controller.current_task)
+                
             time.sleep(0.04)       
         return
 
     def handle_events(self, event: tcod.event.Event) -> BaseEventHandler:
         """Handle events for input handlers with an engine."""
         action_or_state = self.dispatch(event)
+        if not self.engine.player.is_alive:
+                # The player was killed sometime during or after the action.
+            return GameOverEventHandler(self.engine)
+        
         if isinstance(action_or_state, BaseEventHandler):
             return action_or_state
         if self.handle_action(action_or_state):
-            # A valid action was performed.
-            if not self.engine.player.is_alive:
-                # The player was killed sometime during or after the action.
-                return GameOverEventHandler(self.engine)
-            
             return MainGameEventHandler(self.engine)  # Return to the main handler.
+            # A valid action was performed.
+        
+            
+            
         return self
 
     def handle_action(self, action: Optional[Action]) -> bool:
@@ -124,7 +130,13 @@ class EventHandler(BaseEventHandler):
             return False
 
         try:
-            action.perform()
+            if self.player_controller.turns_confused > 0:
+                import random
+                self.engine.message_log.add_message("You wander aimlessly..",color.status_effect_applied)
+                self.player_controller.turns_confused -= 1
+                actions.BumpAction(self.engine.player,dx= random.randint(-1,+1),dy=random.randint(-1,+1)).perform()
+            else:
+                action.perform()
         except exceptions.Impossible as exc:
             self.engine.message_log.add_message(exc.args[0], color.impossible)
             return False  # Skip enemy turn on exceptions.
@@ -132,6 +144,11 @@ class EventHandler(BaseEventHandler):
         self.engine.handle_enemy_turns()
 
         self.engine.update_fov()
+        if self.player_controller.turns_invisible > 0:
+            self.player_controller.turns_invisible -= 1
+            if statusEffect.INVISIBLE in self.engine.player.fighter.status and self.player_controller.turns_invisible <= 0:
+                self.engine.player.fighter.status.remove(statusEffect.INVISIBLE)
+        
         return True
 
     def ev_mousemotion(self, event: tcod.event.MouseMotion) -> None:
@@ -222,7 +239,7 @@ class MainGameEventHandler(EventHandler):
          
 
 
-class GameOverEventHandler(EventHandler):
+class GameOverEventHandler(MainGameEventHandler):
 
     def on_quit(self) -> None:
         """Handle exiting out of a finished game."""
@@ -236,6 +253,26 @@ class GameOverEventHandler(EventHandler):
     def ev_keydown(self, event: tcod.event.KeyDown) -> None:
         # if event.sym == tcod.event.KeySym.ESCAPE:
             self.on_quit()
+
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
+        """By default any mouse click exits this input handler."""
+
+        self.on_quit()
+
+    def on_render(self, console: tcod.console.Console) -> None:
+        """Render the parent and dim the result, then print the message on top."""
+        super().on_render(console)
+        console.tiles_rgb["fg"] //= 4
+        console.tiles_rgb["bg"] //= 4
+
+        console.print(
+            console.width // 2,
+            console.height // 2,
+            "GAME OVER",
+            fg=color.white,
+            bg=color.black,
+            alignment=tcod.CENTER,
+        )
     
 CURSOR_Y_KEYS = {
     tcod.event.KeySym.UP: -1,
@@ -657,11 +694,15 @@ class AreaRangedAttackHandler(SelectIndexHandler):
         engine: Engine,
         radius: int,
         callback: Callable[[Tuple[int, int]], Optional[Action]],
+        char = "!",
+        color = color.white
     ):
         super().__init__(engine)
 
         self.radius = radius
         self.callback = callback
+        self.char = char
+        self.color = color
 
     def on_render(self, console: tcod.console.Console) -> None:
         """Highlight the tile under the cursor."""
@@ -685,7 +726,7 @@ class AreaRangedAttackHandler(SelectIndexHandler):
             for j in range(top,bottom):
                 for i in range(left,right):
                     if   sqrt((x - i) ** 2 + (y - j) ** 2) <= radius:
-                        console.print(i,j,"‼",fg=color.red)
+                        console.print(i,j,self.char,fg=self.color)
             
             # console.draw_frame(
             #     x=x - self.radius,

@@ -8,9 +8,12 @@ dark_gray = (89, 89, 89)
 
 magic_green = (164, 208, 149)
 magic_purple = (79, 54, 82)
+magic_purple_light = (108, 74, 112)
 moss_green = (82, 82, 54)
 monster_blue = (61, 54, 82)
 monster_shine = (103, 92, 140)
+
+cold_blue = (200,200,250)
 
 stone_grey_darker = (45, 43, 42)
 stone_grey_dark = (61, 58, 57)
