@@ -53,9 +53,10 @@ def new_game() -> Engine:
     )
     
     engine.game_world.generate_floor(False)
+    player.place(player.x+14,player.y,engine.game_map)
     engine.update_fov()    
     engine.message_log.add_message(
-        "Hello and welcome, adventurer, to yet another dungeon!", color.welcome_text
+        "You must escape ..", color.welcome_text
     )
     return engine
 
@@ -114,7 +115,7 @@ class MainMenu(input_handlers.BaseEventHandler):
         console.print(
             console.width // 2,
             console.height // 2 - 4,
-            "CRAWLING UNDER THE MOUNTAIN",
+            "Lost in the ROGUE City",
             fg=color.interface_highlight,
             alignment=libtcodpy.CENTER,
         )

@@ -49,7 +49,7 @@ rock = Item(
     name="Round rock",
     icon="assets/sprites/rock.png",
     interactables=[interactables.ThrowInteraction(0)],
-    description= "good for throwing",
+    description= "can be thrown for 1 damage",
     item_type= Item.Type.OTHER
 
 )
@@ -59,7 +59,7 @@ teeth = Item(
     name="Sharp tooth",
     icon="assets/sprites/teef.png",
     interactables=[interactables.ThrowInteraction(2)],
-    description= "can be thrown like a dart",
+    description= "can be thrown like a dart for 3 damage",
     item_type= Item.Type.OTHER
 
 )
@@ -236,9 +236,9 @@ player = Actor(
     name="Player",
     description= "This is you",
     friendly_ai=ai.IdleNeutral(),
-    fighter=Fighter(hp=25, defense=40, power=1,magic=1),
+    fighter=Fighter(hp=20, defense=0, power=1,magic=1),
     inventory=Inventory(capacity=27),
-    icon= "assets\sprites\magito_azul.png",
+    icon= "assets\sprites\microfrog.png",
     hostile=False,
     actor_type=Actor.Type.PLAYER
 )

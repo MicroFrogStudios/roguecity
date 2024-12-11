@@ -40,8 +40,9 @@ def lost_warrior_quest_final(engine:Engine, inter:TalkInteraction):
         inv.drop(gift)
         gift.x = engine.player.x
         gift.y = engine.player.y
+        engine.message_log.add_message("The lost warrior says: You have it! the sacred frog!",color.welcome_text)
         engine.message_log.add_message("The warrior drops something at your feet")
-        engine.message_log.add_message("The lost warrior says: This is the key.",color.welcome_text)
+        engine.message_log.add_message("The lost warrior says: This is the key. You earnt it",color.welcome_text)
 
         inter.dialogue = lost_warrior_dialogue_final
     else:
@@ -52,8 +53,9 @@ def lost_warrior_quest_final(engine:Engine, inter:TalkInteraction):
 
 lost_warrior_dialogue_frog = Dialogue([
     "you have my thanks for guiding me here, stranger..",
-    "I wish i could open the door for you, but i still need something."
-],[None,
+    "I wish i could open the door for you, but i still need something.",
+    ""
+],[None,None,
    lost_warrior_quest_final
    ])
 
