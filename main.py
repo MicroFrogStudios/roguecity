@@ -16,9 +16,6 @@ import handlers.input_handlers as input_handlers
 
 def main():
 
-    tileset_basic = tcod.tileset.load_tilesheet(
-        "tilesets/basic.png", 32, 8, tcod.tileset.CHARMAP_TCOD
-    )
 
     tileset = tcod.tileset.load_tilesheet(
         "tilesets/curses_640x300.png", 16, 16, tcod.tileset.CHARMAP_CP437
