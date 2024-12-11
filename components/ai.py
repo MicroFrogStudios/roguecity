@@ -96,6 +96,10 @@ class PlayerInteract(PlayerAI):
                     interaction : ActorInteraction = target.interactables[0]
                     if interaction.check_player_activable():
                         return interaction.get_action(self.entity.interactor).perform()
+            elif hasattr(self.target,"interactables"):
+                interaction  = self.target.interactables[0]
+                if interaction.check_player_activable():
+                    return interaction.get_action(self.entity.interactor).perform()
         
         self.path = self.get_path_to(self.target.x, self.target.y)
 

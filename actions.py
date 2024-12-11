@@ -96,7 +96,7 @@ class MeleeAction(ActionWithDirection):
         
         if self.entity is self.engine.player:
             for actor in self.engine.game_map.actors:
-                if not actor.fighter.status and actor is not self.engine.player and actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
+                if not actor.fighter.status and actor is not self.engine.player and actor is not self.engine.player_follower  and actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y]:
                     actor.turn_hostile()
             attack_color = color.player_atk
         else:

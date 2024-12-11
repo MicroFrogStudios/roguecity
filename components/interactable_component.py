@@ -100,6 +100,7 @@ class GiveFood(ActorInteraction):
         self.engine.message_log.add_message(f"you feed the {target.name}. They enter in a trance while eating in a frenzy.",color.welcome_text)
         target.ai = ai.FeastingEnemy(target,target.ai,food)
         target.fighter.status.add(statusEffect.STUNNED)
+        self.engine.stats.hungries_feed+=1
 
 class AssaultInteraction(ActorInteraction):
     name = "STRIKE"
@@ -138,6 +139,7 @@ class ScareInteraction(ActorInteraction):
             f"The {target.name} is so spooked it froze in place!",
             color.status_effect_applied,
         )
+        self.engine.stats.wizzo_scares+=1
 
 
 class BiteInteraction(ActorInteraction):
@@ -179,6 +181,7 @@ class BiteInteraction(ActorInteraction):
             self.engine.player.fighter.status.add(statusEffect.INVISIBLE)
         target.turn_hostile()
         target.fighter.take_damage(1)
+        self.engine.stats.shrooms_bites+=1
 
 class TauntInteraction(ActorInteraction):
     
@@ -217,6 +220,7 @@ class PetInteraction(ActorInteraction):
             self.engine.message_log.add_message(
                 f"you pet the {target.name}",
                 color.white)
+            self.engine.stats.rat_pets+=1
         else:
              self.engine.message_log.add_message(
                 f"The {action.entity.name} pets the {target.name}",
@@ -235,7 +239,20 @@ class PropInteraction(Interactable):
 
     def check_player_activable(self) -> bool:
         return self.engine.player.distance(self.parent.x,self.parent.y) < 2
-    
+
+class OpenInteractable(PropInteraction):
+    name= "OPEN"
+    def activate(self, action: actions.InteractiveAction) -> None:
+        import factories.entity_factory as factory
+        for i in action.entity.inventory.items:
+            if i.name == factory.last_key.name:
+                self.engine.win()
+                return
+        else:
+            self.engine.message_log.add_message(
+                "You need a key to open this", color.invalid
+            )
+
 class DescendInteractable(PropInteraction):
     name = "GO DOWN"
     def activate(self, action: actions.InteractiveAction) -> None:
@@ -272,6 +289,10 @@ class ConsumeInteractable(ItemInteraction):
         else:
             #This is in current map
             self.engine.game_map.entities.remove(entity)
+        if entity.item_type.value == "SCROLL":
+            self.engine.stats.scrolls_cast+=1
+        if entity.item_type.value == "FOOD":
+            self.engine.stats.food_eaten+=1
             
     
 
@@ -306,7 +327,18 @@ class PickUpInteractable(ItemInteraction):
         action.entity.inventory.add(self.parent)
         self.engine.message_log.add_message(f"You picked up the {self.parent.name}!")
 
-
+class HatchInteraction(ItemInteraction):
+    name= "HATCH"
+    def activate(self, action: actions.InteractiveAction) -> None:
+        if self.engine.game_world.current_floor <= -5:
+            from factories.entity_factory import microfrog
+            action.entity.inventory.items.remove(self.parent)
+            microfrog.place(action.entity.x,action.entity.y,self.engine.game_map)
+            action.entity.inventory.add(microfrog)
+            self.engine.stats.frogs_hatched+=1
+            self.engine.message_log.add_message(f"The egg hatched!!")
+        else:
+            self.engine.message_log.add_message(f"It doesn't look ready yet.")
 
 class DropInteractable(ItemInteraction):
     name = "DROP"
@@ -365,7 +397,7 @@ class LightningDamageConsumable(scrollCastInteractable):
         closest_distance = self.maximum_range + 1.0
 
         for actor in self.engine.game_map.actors:
-            if actor is not consumer and self.parent.gamemap.visible[actor.x, actor.y]:
+            if actor is not consumer and self.parent.gamemap.visible[actor.x, actor.y] and actor is not self.engine.player_follower:
                 distance = consumer.distance(actor.x, actor.y)
 
                 if distance < closest_distance:
@@ -378,6 +410,8 @@ class LightningDamageConsumable(scrollCastInteractable):
             )
             target.fighter.take_damage(self.damage * action.entity.fighter.magic_total)
             self.consume()
+            if actor is not self.engine.player and actor is not self.engine.player_follower and actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y] and not actor.fighter.status:
+                    actor.turn_hostile()
         else:
             raise Impossible("No enemy is close enough to strike.")
 
@@ -505,7 +539,7 @@ class ThrowInteraction(ConsumeInteractable):
             color.player_atk)
         if consumer is self.engine.player:
             for actor in self.engine.game_map.actors:
-                if actor is not self.engine.player and actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y] and not actor.fighter.status:
+                if actor is not self.engine.player and actor is not self.engine.player_follower and actor.distance(target.x,target.y) <= 20 and actor.actor_type == target.actor_type and self.engine.game_map.visible[actor.x, actor.y] and not actor.fighter.status:
                     actor.turn_hostile()
         self.consume()
 
@@ -600,6 +634,9 @@ class FireballDamageConsumable(scrollCastInteractable):
                     f"The {actor.name} is engulfed in a fiery explosion, taking {self.damage * action.entity.fighter.magic_total} damage!"
                 )
             actor.fighter.take_damage(self.damage * action.entity.fighter.magic_total)
+            if actor is not self.engine.player and actor is not self.engine.player_follower and self.engine.game_map.visible[actor.x, actor.y] and not actor.fighter.status:
+                    actor.turn_hostile()
+        
 
         if not targets_hit:
             raise Impossible("There are no targets in the radius.")

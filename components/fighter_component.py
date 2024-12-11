@@ -101,6 +101,7 @@ class Fighter(BaseComponent):
         else:
             death_message = f"{self.parent.name} is dead!"
             death_msg_color = color.enemy_die
+            self.engine.add_dead_toll(self.parent.surname)
 
         # self.parent.char = "%"
         self.parent.bgColor = self.parent.blood_color

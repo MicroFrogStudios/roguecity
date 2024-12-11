@@ -31,6 +31,7 @@ class Entity:
         fgColor: Tuple[int, int, int] = (255, 255, 255),
         bgColor = None,
         name: str = "<Unnamed>",
+        surname:str = "<Unnamed>",
         description: str = "<description missing>",
         blocks_movement: bool = False,
         render_order: RenderOrder = RenderOrder.CORPSE,
@@ -43,6 +44,7 @@ class Entity:
         self.fgColor = fgColor
         self.bgColor = bgColor 
         self.name = name
+        self.surname = surname
         self.description = description
         self.blocks_movement = blocks_movement
         self.render_order = render_order

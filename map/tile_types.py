@@ -32,6 +32,15 @@ def new_tile(
     """Helper function for defining individual tile types """
     return np.array((walkable, transparent, dark, light), dtype=tile_dt)
 
+def grate_gate(light_fg = color.floor_light,light_bg = color.wall_light,dark_fg =color.floor_dark,dark_bg = color.wall_dark):
+    return new_tile(walkable=False, transparent=True,
+        dark=(ord("╪"), dark_bg, dark_fg),
+        light=(ord("╪"), light_bg, light_fg))
+
+def gate_border(light_fg = color.floor_light,light_bg = color.wall_light,dark_fg =color.floor_dark,dark_bg = color.wall_dark):
+    return new_tile(walkable=False, transparent=False,
+        dark=(ord("▓"), dark_bg, dark_fg),
+        light=(ord("▓"), light_bg, light_fg))
 
 def new_floor(light_color = color.floor_light, dark_color =color.floor_dark):
     return new_tile(

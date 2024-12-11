@@ -45,7 +45,8 @@ class Actor(Entity):
         interactables = None,
         blocks_movement=True,
         loot_chance: tuple[int,int] = (1,1),
-        loot_table : dict[str,list] = None
+        loot_table : dict[str,list] = None,
+        surname = None
 
     ):
         super().__init__(
@@ -54,6 +55,7 @@ class Actor(Entity):
             char=char,
             fgColor=color,
             name=name,
+            surname = surname,
             description=description,
             blocks_movement=blocks_movement,
             render_order=RenderOrder.ACTOR,

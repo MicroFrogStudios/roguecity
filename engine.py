@@ -5,6 +5,7 @@ import pickle
 from typing import TYPE_CHECKING
 from tcod.console import Console
 
+from classes.stats import StatProgress
 from enums import color
 from interface.message_log import MessageLog
 
@@ -24,7 +25,9 @@ if TYPE_CHECKING:
 class Engine:
     game_map: GameMap
     game_world: GameWorld
-    
+    old_man  : Actor
+    lost_warrior : Actor
+    stats : StatProgress
 
     def __init__(self, player: Actor):
         self.player = player
@@ -35,9 +38,11 @@ class Engine:
         self.camera_height = config.screen_height -10
         self.camera_x_offset = 0
         (self.x_left_ref,self.x_right_ref, self.y_left_ref, self.y_right_ref) = (0,0,self.camera_width,self.camera_height)
-        
+        self.stats = StatProgress()
         self.player_controller : PlayerController = PlayerController.get_instance(self.player)
-
+        self.won = False
+        self.player_follower :Actor = None
+        self.lost_warrior_quest_state = "unstarted"
     def handle_enemy_turns(self) -> None:
         for entity in set(self.game_map.actors) - {self.player}:
             if entity.ai:
@@ -45,6 +50,26 @@ class Engine:
                     entity.ai.perform()
                 except exceptions.Impossible:
                     pass # Ignore impossible action exceptions from AI.
+
+    def win(self):
+        print("you won!")
+        self.won = True
+
+    def add_dead_toll(self,name):
+        if name is "skul":
+            self.stats.skull_kills+=1
+        elif name is "rat":
+            self.stats.rat_kills+=1
+        elif name is "wiz":
+            self.stats.wizzo_kills+=1
+        elif name is "hungry":
+            self.stats.hungry_kills+=1  
+        elif name is "shroomed":
+            self.stats.shroom_kills+=1      
+
+    def key_conditions(self):
+        import factories.entity_factory as factory
+        return factory.microfrog in self.player.inventory.items
 
     def render(self, console: Console) -> None:
         

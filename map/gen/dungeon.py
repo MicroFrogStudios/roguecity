@@ -31,17 +31,19 @@ def highest_zone(engine: Engine,map_width,map_height):
 
     player = engine.player
     dungeon = GameMap(engine, map_width, map_height, entities=[player],wall=wall)
-    stair_room_dim = 6
+    stair_room_dim = 10
 
     right_stair_x = map_width//6*5 - stair_room_dim//2
     right_stair_y = map_height//2 - stair_room_dim//2
     right_stair_room = RectangularRoom(right_stair_x,right_stair_y,stair_room_dim,stair_room_dim)
 
     dungeon.tiles[right_stair_room.inner] = floor
-    dungeon.tiles[right_stair_room.center[0]-stair_room_dim//2,right_stair_room.center[1]] = door
+    # dungeon.tiles[right_stair_room.center[0]-stair_room_dim//2,right_stair_room.center[1]] = door
     factory.down_staircase.spawn(dungeon,*right_stair_room.center)
     
     engine.player.place(*right_stair_room.center, dungeon)
+    if engine.lost_warrior_quest_state == "unstarted":
+        engine.lost_warrior.place(right_stair_room.center[0]-3,right_stair_room.center[1],dungeon)
     
     return dungeon
 
@@ -90,18 +92,44 @@ def initial_zone(engine: Engine,goingUp,map_width,map_height):
     dungeon.tiles[right_stair_room.inner] = floor
     dungeon.tiles[right_stair_room.center[0]-stair_room_dim//2,right_stair_room.center[1]] = door
     hall_width =right_stair_x- left_stair_x - stair_room_dim
-    main_hall = RectangularRoom(left_stair_x + stair_room_dim,left_stair_y+1,hall_width,4)
+    main_hall = RectangularRoom(left_stair_x + stair_room_dim,left_stair_y-2,hall_width,10)
     dungeon.tiles[main_hall.inner] = floor
+    
+    gate_border = tiles.gate_border(color.black,color.stone_grey,color.black,color.stone_grey_darker)
+    for y in range(main_hall.y1+1,main_hall.y1-4,-1):
+        dungeon.tiles[main_hall.x1 +main_hall.width//2-3,y] = gate_border
+        dungeon.tiles[main_hall.x1 +main_hall.width//2+3,y] = gate_border
+        dungeon.tiles[main_hall.x1 +main_hall.width//2-2 :main_hall.x1 +main_hall.width//2+3,y] = tiles.grate_gate(color.black,color.gray,color.black,color.stone_grey_darker)
+    
+    factory.gate.spawn(dungeon,main_hall.x1 +main_hall.width//2,main_hall.y1+3)
+    dungeon.tiles[main_hall.x1 +main_hall.width//2-3:main_hall.x1 +main_hall.width//2+4,main_hall.y1-4] = gate_border
 
     factory.down_staircase.spawn(dungeon,*right_stair_room.center)
     factory.up_staircase.spawn(dungeon,*left_stair_room.center)
-    
-    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
-    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
-    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
-    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
-    factory.invisibility_scroll.spawn(dungeon,*main_hall.center)
+    """
+     ▓▓▓▓▓▓▓▓▓
+     ▓▓╪╪╪╪╪▓▓
+     ▓▓╪╪╪╪╪▓▓
+     ▓▓╪╪╪╪╪▓▓
+    """    
+    engine.old_man.place(main_hall.x2-3, main_hall.center[1]-1,dungeon)
 
+    if engine.lost_warrior_quest_state == "started" and engine.lost_warrior.is_alive:
+        engine.lost_warrior_quest_state = "completed"
+        engine.player_follower = None
+        import components.ai as ai
+        engine.lost_warrior.friendly_ai= ai.IdleNeutral()
+        engine.lost_warrior.ai = engine.lost_warrior.friendly_ai 
+        from factories.dialogue_factory import lost_warrior_dialogue_frog
+        from components.interactable_component import TalkInteraction
+        talk = TalkInteraction(lost_warrior_dialogue_frog)
+        talk.parent = engine.lost_warrior
+        engine.lost_warrior.interactables = [talk]
+        
+    if engine.lost_warrior_quest_state == "completed":
+        engine.lost_warrior.place(main_hall.x1+3, main_hall.center[1]-1,dungeon)
+
+    
     if goingUp:
         engine.player.place(*right_stair_room.center, dungeon)
     else:
@@ -216,6 +244,8 @@ def generate_level(
         player.place(*right_stair_room.center, dungeon)
     else:
         player.place(*left_stair_room.center, dungeon)
+    if engine.player_follower:
+        engine.player_follower.place(player.x,player.y+1,dungeon)
     return dungeon
 
 def place_equipment(rooms : list[RectangularRoom],dungeon,level):

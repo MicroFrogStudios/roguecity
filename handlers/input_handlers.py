@@ -7,7 +7,7 @@ from typing import Callable, Optional, TYPE_CHECKING, Tuple, Union
 from tcod.console import Console
 import tcod.event
 import tcod.libtcodpy
-
+from tcod import libtcodpy
 import actions
 from actions import (
     Action,
@@ -110,7 +110,9 @@ class EventHandler(BaseEventHandler):
         if not self.engine.player.is_alive:
                 # The player was killed sometime during or after the action.
             return GameOverEventHandler(self.engine)
-        
+        if self.engine.won:
+            return CreditsHandler(self.engine)
+
         if isinstance(action_or_state, BaseEventHandler):
             return action_or_state
         if self.handle_action(action_or_state):
@@ -201,9 +203,9 @@ class MainGameEventHandler(EventHandler):
         #     return CharacterScreenEventHandler(self.engine)
         elif key == tcod.event.KeySym.v:# hot key to big menu
             return TabMenuHandler(self.engine,2)
-        elif key == tcod.event.KeySym.o:
-            import numpy as np
-            self.engine.game_map.explored = np.full((self.engine.game_map.width, self.engine.game_map.height), fill_value=True, order="F")
+        # elif key == tcod.event.KeySym.o:
+        #     import numpy as np
+        #     self.engine.game_map.explored = np.full((self.engine.game_map.width, self.engine.game_map.height), fill_value=True, order="F")
             # self.engine.gamemap.explored = np.full((width, height), fill_value=True, order="F")
         # No valid key was pressed
         return action
@@ -237,7 +239,84 @@ class MainGameEventHandler(EventHandler):
         
         MapContextPanel.render(console=console, engine=self.engine)
          
+class CreditsHandler(MainGameEventHandler):
 
+    def on_quit(self) -> None:
+        """Handle exiting out of a finished game."""
+        if os.path.exists("savegame.sav"):
+            os.remove("savegame.sav")  # Deletes the active save file.
+        raise exceptions.QuitWithoutSaving()  # Avoid saving a finished game.
+
+    def ev_quit(self, event: tcod.event.Quit) -> None:
+        self.on_quit()
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> None:
+         if event.sym == tcod.event.KeySym.ESCAPE:
+            self.on_quit()
+
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
+        """By default any mouse click exits this input handler."""
+
+        pass
+
+    def on_render(self, console: tcod.console.Console) -> None:
+        """Render the parent and dim the result, then print the message on top."""
+        super().on_render(console)
+        console.rgb["fg"] //= 4
+        console.rgb["bg"] //= 4
+
+        xc = console.width // 2
+        yc = console.height // 2-10
+        console.print(
+            xc,
+            yc,
+            "!!CONGRATS!! !!CONGRATS!! !!CONGRATS!! !!CONGRATS!! !!CONGRATS!! !!CONGRATS!!",
+            fg=color.interface_highlight,
+            bg=color.black,
+            alignment=libtcodpy.CENTER,
+        )
+
+        console.print(
+            xc,
+            yc +1,
+            "you completed this little game, thank you very much for playing it",
+            fg=color.white,
+            bg=color.black,
+            alignment=libtcodpy.CENTER,
+        )
+        cprint = lambda text,x,y: console.print(
+            xc + x,
+            yc +y,
+            text,
+            fg=color.white,
+            bg=color.black,
+            alignment=libtcodpy.CENTER,
+        )
+        st = self.engine.stats
+        cprint("Here you have some stats",0,3)
+        cprint("KILLS:",-20,4)
+        cprint(f"skulls killed: {st.skull_kills}",-20,6)
+        cprint(f"rats killed: {st.rat_kills}",-20,7)
+        cprint(f"shrooms killed: {st.shroom_kills}",-20,8)
+        cprint(f"wizzos killed: {st.wizzo_kills}",-20,9)
+        cprint(f"hungryheads killed: {st.hungry_kills}",-20,10)
+        cprint("OTHER:",+20,4)
+        cprint(f"rats pet: {st.rat_pets}",20,6)
+        cprint(f"hungryheads fed: {st.hungries_feed}",20,7)
+        cprint(f"shrooms bitten: {st.shrooms_bites}",20,8)
+        cprint(f"wizzos scared: {st.wizzo_scares}",20,9)
+        cprint(f"scrolls cast: {st.scrolls_cast}",20,10)
+        cprint(f"food eaten: {st.food_eaten}",20,11)
+        cprint(f"frogs hatched: {st.frogs_hatched}",20,12)
+
+        console.print(
+            xc,
+            yc+14,
+            "by microfrog dev",
+            fg=color.interface_highlight,
+            bg=color.black,
+            alignment=libtcodpy.CENTER,
+        )
 
 class GameOverEventHandler(MainGameEventHandler):
 
@@ -262,8 +341,8 @@ class GameOverEventHandler(MainGameEventHandler):
     def on_render(self, console: tcod.console.Console) -> None:
         """Render the parent and dim the result, then print the message on top."""
         super().on_render(console)
-        console.tiles_rgb["fg"] //= 4
-        console.tiles_rgb["bg"] //= 4
+        console.rgb["fg"] //= 4
+        console.rgb["bg"] //= 4
 
         console.print(
             console.width // 2,
@@ -271,7 +350,7 @@ class GameOverEventHandler(MainGameEventHandler):
             "GAME OVER",
             fg=color.white,
             bg=color.black,
-            alignment=tcod.CENTER,
+            alignment=libtcodpy.CENTER,
         )
     
 CURSOR_Y_KEYS = {

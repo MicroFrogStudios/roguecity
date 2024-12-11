@@ -11,6 +11,16 @@ from factories import dialogue_factory
 
 # ITEMS
 
+last_key = Item(
+    char="╒",
+    color=color.black,
+    name="dungeon key",
+    icon="assets/sprites/last_key.png",
+    interactables=[],
+    description= "Might get you out of here",
+    item_type= Item.Type.KEY
+)
+
 food = Item(
     char="%",
     color=(153, 0, 0),
@@ -117,11 +127,20 @@ mystery_egg = Item(
     color=(240,0,0),
     name= "Mysterious Egg",
     description="Red egg emanating a strange power",
-    icon = "assets/sprites/red_egg.png"
-    
+    icon = "assets/sprites/red_egg.png",
+    item_type=Item.Type.KEY,
+    interactables = [interactables.HatchInteraction()]
+
 )
 
-
+microfrog = Item(
+    char=".",
+    color=(240,0,0),
+    name= "Microfrog",
+    description="a very important frog.",
+    icon = "assets/sprites/microfrog.png",
+    item_type=Item.Type.KEY,
+)
 
 from components.inventory_component import Equipment as eq
 
@@ -217,7 +236,7 @@ player = Actor(
     name="Player",
     description= "This is you",
     friendly_ai=ai.IdleNeutral(),
-    fighter=Fighter(hp=25, defense=0, power=1,magic=1),
+    fighter=Fighter(hp=25, defense=40, power=1,magic=1),
     inventory=Inventory(capacity=27),
     icon= "assets\sprites\magito_azul.png",
     hostile=False,
@@ -231,12 +250,15 @@ old_man = Actor(
     hostile=False,
     actor_type=Actor.Type.NPC,
     friendly_ai=ai.IdleNeutral(),
-    hostile_ai= ai.HostileEnemy(),
+    hostile_ai= ai.MageEnemy(10,100),
     interactables=[interactables.TalkInteraction(dialogue_factory.old_man_dialogue),interactables.AssaultInteraction()],
     icon= "assets/sprites/magito_azul.png",
     fighter=Fighter(hp=999, defense=0, power=1,magic=10),
     inventory=Inventory(capacity=1),
     )
+
+mystery_egg.parent = old_man.inventory
+old_man.inventory.items.append(mystery_egg)
 
 lost_warrior =  Actor(
     char="☻",
@@ -245,19 +267,28 @@ lost_warrior =  Actor(
     description= "Shadow of a former soldier, only hope moves him forward",
     hostile=False,
     actor_type=Actor.Type.NPC,
-    friendly_ai=ai.RandomGait(5),
+    friendly_ai=ai.IdleNeutral(),
     hostile_ai=ai.HostileEnemy(),
-    fighter=Fighter(hp=10, defense=1, power=2,magic=0),
+    fighter=Fighter(hp=50, defense=3, power=10,magic=0),
     inventory=Inventory(capacity=2),
-    interactables=[interactables.AssaultInteraction()],
+    interactables=[interactables.TalkInteraction(dialogue_factory.lost_warrior_dialogue_start),interactables.AssaultInteraction()],
     icon= "assets\sprites\lost_warrior.png",
+    loot_chance=(1,1),
+    loot_table={"items":  [last_key],
+                "weights":[1]}
 )
+
+last_key.parent = lost_warrior.inventory
+lost_warrior.inventory.items.append(last_key)
+
+
 #monsters
 
 wizzo = Actor(
     char="A",
     color=color.magic_purple_light,
     name="wizzo",
+    surname="wiz",
     description= "Strange apparition possessing arcane powers.",
     hostile=True,
     actor_type=Actor.Type.MONSTER,
@@ -277,6 +308,7 @@ archwizzo = Actor(
     color=color.magic_purple_light,
     blood_color=color.magic_green,
     name="arch wizzo",
+    surname="wiz",
     description= "Strange apparition possessing arcane powers.",
     hostile=True,
     actor_type=Actor.Type.MONSTER,
@@ -295,6 +327,7 @@ hungryhead =  Actor(
     char="Θ",
     color=color.monster_blue,
     name="hungry head",
+    surname="hungry",
     description= "Very hungry, eating is the only thing it can think off.",
     hostile=True,
     actor_type=Actor.Type.MONSTER,
@@ -313,6 +346,7 @@ hungryhead_shiny =  Actor(
     char="Θ",
     color=color.monster_shine,
     name="shiny hungry head",
+    surname="hungry",
     description= "Very hungry, eating is the only thing it can think off.",
     hostile=True,
     actor_type=Actor.Type.MONSTER,
@@ -331,6 +365,7 @@ weak_skuly = Actor(
     char="o",
     color=color.bone_light,
     name="small walking skull",
+    surname="skul",
     description= "Eerie skull walking on two legs. Harmless if left alone",
     hostile=False,
     actor_type=Actor.Type.MONSTER,
@@ -350,6 +385,7 @@ weak_skuly = Actor(
 strong_skuly = Actor(
     char="O",
     color=color.bone_light,
+    surname="skul",
     name="giant walking skull",
     description= "Eerie skull walking on two legs. Harmless if left alone",
     hostile=False,
@@ -369,6 +405,7 @@ shroomed = Actor(
     char="♠",
     color=color.bone_light,
     name="shroomed",
+    surname = "shroomed",
     hostile=False,
     actor_type=Actor.Type.CRITTER,
     description="Walking mushroom, very shy, might be tasty...",
@@ -387,6 +424,7 @@ rat_small = Actor(
     char="r",
     color=(100, 100, 100),
     name="rat",
+    surname="rat",
     hostile=False,
     actor_type=Actor.Type.CRITTER,
     description="A small mammal looking for food",
@@ -429,4 +467,13 @@ up_staircase = Prop(
     description="It goes up",
     icon="assets/sprites/upstairs.png",
     interactables=[interactables.AscendInteractable()]
+)
+
+gate = Prop(
+    char="◙",
+    color=color.dark_gray,
+    name="Dungeon Exit",
+    description="This gate should lead outside. Your only chance of escape.",
+    interactables=[interactables.OpenInteractable()],
+    icon="assets/sprites/gate.png"
 )
