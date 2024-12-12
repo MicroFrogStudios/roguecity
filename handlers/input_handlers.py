@@ -831,7 +831,7 @@ class ControlListHandler(AskUserEventHandler):
 
         y = 0
 
-        width = len(self.TITLE) + 30
+        width = len(self.TITLE) + 35
 
         console.draw_frame(
             x=x,
@@ -843,39 +843,66 @@ class ControlListHandler(AskUserEventHandler):
             fg=(255, 255, 255),
             bg=(0, 0, 0),
         )
-
+        x +=1
         console.print(
             x=x + 1, y=y + 2, string="Bump into enemies to attack them"
         )
         
         console.print(
-            x=x + 1, y=y + 4, string="left mouse click on objects to see info"
+            x=x + 1, y=y + 4, string="left mouse click",fg=color.interface_highlight
+        )
+        console.print(
+            x=x + 17, y=y + 4, string=" on objects to see info"
         )
         
         console.print(
-            x=x + 1, y=y + 6, string="Move/Navigate: WASD, numpad or arrows"
+            x=x + 1, y=y + 6, string="Move/Navigate:"
         )
         console.print(
-            x=x + 1, y=y + 8, string="Move/interact also with mouse right click"
+            x=x + 16, y=y + 6, string="WASD, numpad or arrows",fg=color.interface_highlight
         )
         console.print(
-            x=x + 1, y=y + 10, string="Context menu: 'Q'"
+            x=x + 1, y=y + 8, string="Move/interact also with "
+        )
+        console.print(
+            x=x + 25, y=y + 8, string="mouse right click",fg=color.interface_highlight
+        )
+        console.print(
+            x=x + 1, y=y + 10, string="Context menu:"
+        )
+        console.print(
+            x=x + 16, y=y + 10, string="'Q'",fg=color.interface_highlight
         )
         
         console.print(
-            x=x + 1, y=y + 12, string="Confirm: 'E' or RETURN or INTRO"
+            x=x + 1, y=y + 12, string="Confirm:"
         )
         console.print(
-            x=x + 1, y=y + 14, string="Menu: 'ESC'"
+            x=x + 10, y=y + 12, string="'E' / RETURN / INTRO",fg=color.interface_highlight
         )
         console.print(
-            x=x + 1, y=y + 16, string="Inventory: 'I'"  
+            x=x + 1, y=y + 14, string="Menu: "
         )
         console.print(
-            x=x + 1, y=y + 18, string="Message log: 'V'"  
+            x=x + 7, y=y + 14, string="'ESC'",fg=color.interface_highlight
         )
         console.print(
-            x=x + 1, y=y + 20, string="Next tab: TAB"  
+            x=x + 1, y=y + 16, string="Inventory: "  
+        )
+        console.print(
+            x=x + 12, y=y + 16, string="'I'" ,fg=color.interface_highlight 
+        )
+        console.print(
+            x=x + 1, y=y + 18, string="Message log:"  
+        )
+        console.print(
+            x=x + 14, y=y + 18, string=" 'V'"  ,fg=color.interface_highlight 
+        )
+        console.print(
+            x=x + 1, y=y + 20, string="Next tab:"  
+        )
+        console.print(
+            x=x + 10, y=y + 20, string=" TAB"  ,fg=color.interface_highlight 
         )
             
 class CharacterScreenEventHandler(AskUserEventHandler):
