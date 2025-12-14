@@ -9,6 +9,7 @@ from tcod.console import Console
 from config import screen_height, screen_width
 from interface.render_functions import wrap
 from components.inventory_component import Inventory
+
 from engine import Engine
 import config
 from enums import color
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from engine import Engine
     from classes.entity import Entity
     from components.fighter_component import Fighter
-    from classes.item import Equipable
+    from classes.item import Item, Equipable
 
 
 class Container:
@@ -354,16 +355,34 @@ class StatusMenu(BaseMenu):
         super().__init__(submenus, name)
 
 
+class TabInventoryMenu(TabContainer):
+    def __init__(self,name, items : list[Item], x=0, y=3, width=config.screen_width, height=config.screen_height, tab_cursor=0):
+        tabs = [InventoryMenu("ALL",items),
+                InventoryMenu("EQUIP",[i for i in items if i.item_type == "EQUIP"]),
+                InventoryMenu("SCROLLS",[i for i in items if i.item_type == "SCROLL"])]# diferent filters of the inventory
+        super().__init__(tabs, x, y, width, height, tab_cursor)
+        self.items = items
+        self.name = name
+
+    def menu_buttons(self):
+        tabButtons : list = [((0,-1),b) for b in self.tabButtons]
+        tabButtons.extend(self.current_tab.menu_buttons())
+        return tabButtons
+    
+    def navigate(self, dx, dy):
+       self.current_tab.navigate(dx,dy)
+       
+
 class InventoryMenu(ScrollingMenu):
     """ Menu displaying an inventory"""
     
-    def __init__(self, inventory : Inventory) -> None:
-        self.inventory = inventory
+    def __init__(self, name, items : list[Item]) -> None:
+        self.items = items
         submenus = [MultiOptionSubMenu( item.name,self,
                                        [i.name for i in item.get_interactables()],
-                                       [lambda i = inter: i.get_action(inventory.parent.interactor) for inter in item.get_interactables()])
-                    for item in self.inventory.items]
-        super().__init__(submenus, "INVENTORY",padding=3,submenu_height=4)
+                                       [lambda i = inter: i.get_action(item.parent.parent.interactor) for inter in item.get_interactables()])
+                    for item in self.items]
+        super().__init__(submenus, name,padding=3,submenu_height=4)
         
         
     def navigate(self, dx, dy):
@@ -395,11 +414,11 @@ class InventoryMenu(ScrollingMenu):
             sub.render(console,engine,selected=i + self.page_size*self.current_page == self.submenu_cursor)
             inv_i = self.submenus.index(sub)
         
-        if self.inventory.items:
-            panel = ContextPanelMenu(90,0,30,self.inventory.items[self.submenu_cursor],engine)
+        if self.submenus: #inventory.items
+            panel = ContextPanelMenu(90,0,30,self.items[self.submenu_cursor],engine)
             panel.render(console,engine)
-            # InventoryContextPanel.render(console,engine,self.inventory.items[self.submenu_cursor])
             
+
     def on_confirm(self):
         return self.submenus[self.submenu_cursor].on_confirm()
 

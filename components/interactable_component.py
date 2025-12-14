@@ -27,6 +27,7 @@ import random
 from handlers.input_handlers import (
     ActionOrHandler,
     AreaRangedAttackHandler,
+    DialogueMessage,
     SingleRangedAttackHandler,
 )
 
@@ -70,15 +71,20 @@ class TalkInteraction(ActorInteraction):
     
     def __init__(self, dialogue :Dialogue) -> None:
         self.dialogue = dialogue
-    
+        
+    def get_action(self, activator):
+        self.talked_line = self.dialogue.get_next_line(self.engine,self)
+        return DialogueMessage(self.engine,self.talked_line, super().get_action(activator))
+
     def check_player_activable(self) -> bool:
         return super().check_player_activable() and not self.parent.hostile
 
     
     def activate(self, action: actions.InteractiveAction) -> None:
         super().activate(action)
-        talked_line = self.dialogue.get_next_line(self.engine,self)
-        self.engine.message_log.add_message(f"The {self.parent.name} says: {talked_line}",color.welcome_text)
+        
+        self.engine.message_log.add_message(f"The {self.parent.name} says: {self.talked_line}",color.welcome_text)
+
 
 class GiveFood(ActorInteraction):
     name = "FEED"
@@ -93,12 +99,11 @@ class GiveFood(ActorInteraction):
         
         for item in feeder.inventory.items:
             if item.item_type.value == "FOOD":
-                food = item
                 feeder.inventory.items.remove(item)
                 break
 
         self.engine.message_log.add_message(f"you feed the {target.name}. They enter in a trance while eating in a frenzy.",color.welcome_text)
-        target.ai = ai.FeastingEnemy(target,target.ai,food)
+        target.ai = ai.FeastingEnemy(target,target.ai)
         target.fighter.status.add(statusEffect.STUNNED)
         self.engine.stats.hungries_feed+=1
 

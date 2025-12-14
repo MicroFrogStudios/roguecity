@@ -234,10 +234,13 @@ class MageEnemy(BaseAI):
         return WaitAction(self.entity).perform()
 
 class HungryEnemy(BaseAI):
-    def __init__(self, entity: Actor=None):
+    def __init__(self, entity: Actor=None, turnsPerMove = 2,favoriteFood = None):
         super().__init__(entity)
         self.path: List[Tuple[int, int]] = []
         self.target :Actor = None
+        self.favoriteFood = favoriteFood
+        self.turnsPerMove = turnsPerMove
+        self.turnsLeft = turnsPerMove
 
     def perform(self) -> None:
         
@@ -248,14 +251,17 @@ class HungryEnemy(BaseAI):
                     self.engine.game_map.entities.remove(self.target)
                     self.engine.message_log.add_message(f"The {self.entity.name} ate the {self.target.name}")
                     self.target = None
+                    self.entity.fighter.status.add(statusEffect.STUNNED)
+                    self.entity.ai = FeastingEnemy(self.entity,self) 
                     return WaitAction(self.entity).perform() 
                 except KeyError:
                     print("it tried to eat something weird")
                 self.target = None
-            if self.target is None:
+            if self.target is None or not self.target.actor_type is self.favoriteFood:
                 min_dis = 20
                 for actor in self.engine.game_map.actors:
                     dis = actor.distance(self.entity.x,self.entity.y)
+                    dis = dis -20 if actor.actor_type is self.favoriteFood else dis 
                     if dis <= min_dis and actor.actor_type != self.entity.actor_type and self.engine.game_map.visible[actor.x, actor.y] and not statusEffect.INVISIBLE in actor.fighter.status:
                         self.target = actor
                         min_dis = dis
@@ -272,11 +278,14 @@ class HungryEnemy(BaseAI):
 
                 self.path = self.get_path_to(self.target.x, self.target.y)
 
-        if self.path:
-            dest_x, dest_y = self.path.pop(0)
-            return MovementAction(
-                self.entity, dest_x - self.entity.x, dest_y - self.entity.y,
-            ).perform()
+        self.turnsLeft-=1
+        if self.turnsLeft <=  0:
+            self.turnsLeft = self.turnsPerMove
+            if self.path:
+                dest_x, dest_y = self.path.pop(0)
+                return MovementAction(
+                    self.entity, dest_x - self.entity.x, dest_y - self.entity.y
+                ).perform()
 
         return WaitAction(self.entity).perform()
 
@@ -404,7 +413,7 @@ class ConfusedEnemy(BaseAI):
 
 class FeastingEnemy(BaseAI):
     def __init__(
-        self, entity: Actor, previous_ai: Optional[BaseAI], food: Item
+        self, entity: Actor, previous_ai: Optional[BaseAI]
     ):
         super().__init__(entity)
 
@@ -422,6 +431,9 @@ class FeastingEnemy(BaseAI):
             self.entity.fighter.status.remove(statusEffect.STUNNED)
         else:
             self.turns_remaining -= 1
+            self.engine.message_log.add_message(
+                f"{self.entity.name}: Crunch"
+            )
             
 
             

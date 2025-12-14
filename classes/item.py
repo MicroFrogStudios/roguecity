@@ -92,7 +92,8 @@ class Equipable(Item):
                          name=name,
                          description=description,
                          icon=icon,
-                         interactables=interactables)
+                         interactables=interactables,
+                         item_type=Item.Type.EQUIP)
         
         self.equipped = False
         self.eq_type = eq_type

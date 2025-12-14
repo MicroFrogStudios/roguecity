@@ -51,7 +51,7 @@ class Equipment(BaseComponent):
         AMULET = "amulet"
         STAFF = "staff" 
     def __init__(self) -> None:
-        self.slots : dict[self.Type,Optional[Equipable]]= {
+        self.slots : dict[Equipment.Type,Optional[Equipable]]= {
             Equipment.Type.ARMOR: None,
             Equipment.Type.WEAPON : None,
             Equipment.Type.AMULET : None,

@@ -22,7 +22,7 @@ import config
 import enums.color as color
 from enums.status_effects import statusEffect
 import exceptions
-from interface.navigable_menu import Container, InventoryMenu, TabContainer
+from interface.navigable_menu import Container, InventoryMenu, TabContainer,TabInventoryMenu
 from interface.panels import MapContextPanel
 from player_controller import PlayerController
 
@@ -86,6 +86,8 @@ class PopupMessage(BaseEventHandler):
         """Any key returns to the parent handler."""
         return self.parent
 
+
+
 class EventHandler(BaseEventHandler):
     def __init__(self, engine: Engine):
         self.engine = engine
@@ -118,8 +120,6 @@ class EventHandler(BaseEventHandler):
         if self.handle_action(action_or_state):
             return MainGameEventHandler(self.engine)  # Return to the main handler.
             # A valid action was performed.
-        
-            
             
         return self
 
@@ -238,7 +238,39 @@ class MainGameEventHandler(EventHandler):
         super().on_render(console)
         
         MapContextPanel.render(console=console, engine=self.engine)
-         
+
+
+class DialogueMessage(MainGameEventHandler):
+
+    def __init__(self, engine,text,action):
+        super().__init__(engine)
+        self.text = text
+        self.action = action
+
+    def on_render(self, console: tcod.console.Console) -> None:
+        """Render the parent and dim the result, then print the message on top."""
+        super().on_render(console)
+        console.tiles_rgb["fg"] //= 8
+        console.tiles_rgb["bg"] //= 8
+
+        console.print(
+            console.width // 2,
+            console.height // 2,
+            self.text,
+            fg=color.white,
+            bg=color.black,
+            alignment=tcod.CENTER,
+        )
+
+    def ev_keydown(self, event: tcod.event.KeyDown) -> Optional[BaseEventHandler]:
+        """Any key returns to the parent handler."""
+        return self.action
+
+    def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
+        """By default any mouse click exits this input handler."""
+
+        return self.action
+
 class CreditsHandler(MainGameEventHandler):
 
     def on_quit(self) -> None:
@@ -454,7 +486,7 @@ class SelectedEntityHandler(AskUserEventHandler):
              if button.hovering(self.engine):
                  MapContextPanel.container.current_tab.has_focus=True
                  MapContextPanel.container.set_cursor(*cursor)
-                 print("hovering")
+                #  print("hovering")
                  return
              MapContextPanel.container.current_tab.has_focus=False
     
@@ -507,13 +539,7 @@ class SelectedEntityHandler(AskUserEventHandler):
                 from components.interactable_component import PickUpInteractable 
                 if item.pickUpInteractable.check_player_activable():
                     return item.pickUpInteractable.get_action(self.engine.player.interactor)
-            
-            
-        
-        
-    
-    
-
+              
 class NavigableMenuHandler(AskUserEventHandler):
     """This might not be used ever"""
     def __init__(self, engine: actions.Engine,rootMenu :Container):
@@ -550,7 +576,8 @@ class TabMenuHandler(AskUserEventHandler):
         
     def __init__(self, engine: actions.Engine,cursor = 0):
         super().__init__(engine)
-        inventoryMenu = InventoryMenu(engine.player.inventory)
+        inventoryMenu = InventoryMenu( "INVENTORY",engine.player.inventory.items)
+        # inventoryMenu = TabInventoryMenu( "INVENTORY",engine.player.inventory.items,x=0,y=4,width=80,height=36)
         from interface.navigable_menu import OptionsMenu, HistoryViewer
         optionsTab = OptionsMenu("OPTIONS",[("Continue",lambda: MainGameEventHandler(self.engine)),
                                             ("Controls",lambda: ControlListHandler(self.engine)),
@@ -579,7 +606,7 @@ class TabMenuHandler(AskUserEventHandler):
         # super().ev_keydown(event)
         
     def ev_mousebuttondown(self, event: tcod.event.MouseButtonDown) -> Optional[ActionOrHandler]:
-        """By default any mouse click exits this input handler."""
+        
 
         """Left click confirms a selection."""
         
@@ -612,7 +639,7 @@ class TabMenuHandler(AskUserEventHandler):
                 button.fg = button.text_color
  
  
-   
+@DeprecationWarning   
 class InventoryEventHandler(AskUserEventHandler):
     """This handler lets the user select an item.
 

@@ -56,15 +56,15 @@ class Engine:
         self.won = True
 
     def add_dead_toll(self,name):
-        if name is "skul":
+        if name == "skul":
             self.stats.skull_kills+=1
-        elif name is "rat":
+        elif name == "rat":
             self.stats.rat_kills+=1
-        elif name is "wiz":
+        elif name == "wiz":
             self.stats.wizzo_kills+=1
-        elif name is "hungry":
+        elif name == "hungry":
             self.stats.hungry_kills+=1  
-        elif name is "shroomed":
+        elif name == "shroomed":
             self.stats.shroom_kills+=1      
 
     def key_conditions(self):
