@@ -146,30 +146,6 @@ class PlayerPathing(PlayerAI):
         
         self.target = None
     
-class HostileEnemy(BaseAI):
-    def __init__(self, entity: Actor=None):
-        super().__init__(entity)
-        self.path: List[Tuple[int, int]] = []
-
-    def perform(self) -> None:
-        target = self.engine.player
-        dx = target.x - self.entity.x
-        dy = target.y - self.entity.y
-        distance = max(abs(dx), abs(dy))  # Chebyshev distance.
-
-        if self.engine.game_map.visible[self.entity.x, self.entity.y] and not statusEffect.INVISIBLE in target.fighter.status:
-            if distance <= 1:
-                return MeleeAction(self.entity, dx, dy).perform()
-
-            self.path = self.get_path_to(target.x, target.y)
-
-        if self.path:
-            dest_x, dest_y = self.path.pop(0)
-            return MovementAction(
-                self.entity, dest_x - self.entity.x, dest_y - self.entity.y,
-            ).perform()
-
-        return WaitAction(self.entity).perform()
 
 class FleeingEnemy(BaseAI):
     def __init__(self, entity: Actor = None,target = None):
@@ -289,15 +265,42 @@ class HungryEnemy(BaseAI):
 
         return WaitAction(self.entity).perform()
 
+
+class AttackTarget(BaseAI):
+    def __init__(self, entity: Actor = None,target : Actor = None):
+        super().__init__(entity)
+        self.target = target
+        
+        self.path: List[Tuple[int, int]] = []
+
+    def perform(self):
+        if self.target is None and self.entity.hostile:
+            self.target = self.engine.player
+        dx = self.target.x - self.entity.x
+        dy = self.target.y - self.entity.y
+        distance = max(abs(dx), abs(dy)) 
+        if self.engine.game_map.visible[self.entity.x, self.entity.y] and not statusEffect.INVISIBLE in self.target.fighter.status:
+            if distance <= 1:
+                return MeleeAction(self.entity, dx, dy).perform()
+            self.path = self.get_path_to(self.target.x, self.target.y)
+
+        if self.path:
+            dest_x, dest_y = self.path.pop(0)
+            return MovementAction(
+                self.entity, dest_x - self.entity.x, dest_y - self.entity.y,
+            ).perform()
+
+        return WaitAction(self.entity).perform()
+    
 class HostileNeutral(BaseAI):
     def __init__(self, entity: Actor=None,target_type = None):
         super().__init__(entity)
         self.target_type = target_type
         self.path: List[Tuple[int, int]] = []
         self.target :Actor = None
+    
     def perform(self) -> None:
         
-
         if self.engine.game_map.visible[self.entity.x, self.entity.y]:
             if  self.target is not None and not self.target.is_alive:
                 self.target = None
@@ -505,16 +508,30 @@ class CuriousCritter(BaseAI):
         return WaitAction(self.entity).perform()
 
 
-class ShyGuardian(BaseAI):
+class GuardianAI(BaseAI):
 
-    def __init__(self, entity=None,radius= 20,defending_entity: Entity = None):
+    def __init__(self, entity=None,radius= 20,protegee: Actor = None):
         self.radius = radius
-        self.defending_entity: Entity = defending_entity
+        self.protegee: Actor = protegee
+        self.target = self.protegee
         super().__init__(entity)
     def perform(self) -> None:
 
         if self.engine.game_map.visible[self.entity.x, self.entity.y]:
-            pass
+            if self.protegee is not None and not self.protegee.is_alive:
+                self.search_closest_enemy()
+                if self.target is self.protegee:
+                    return FollowNeutral(self.entity,self.target).perform()
+                else:
+                    return AttackTarget(self.entity,self.target).perform()
+
+    def search_closest_enemy(self):
+        min_dis = self.radius
+        for actor in self.engine.game_map.actors:
+            dis = actor.distance(self.entity.x,self.entity.y)
+            if dis < min_dis and actor.hostile:
+                self.target = actor
+                min_dis = dis
 
 class RandomGait(BaseAI):
     """

@@ -102,10 +102,10 @@ class MeleeAction(ActionWithDirection):
         else:
             attack_color = color.enemy_atk
         if damage > 0:
-            if target is self.engine.player:
-                for actor in self.engine.game_map.actors:
-                    if actor.actor_type == self.engine.player.actor_type and self.engine.game_map.visible[actor.x, actor.y] and self.entity.actor_type != self.engine.player.actor_type :
-                        actor.ai = ai.HostileNeutral(actor,self.entity.actor_type)
+            # if target is self.engine.player:
+            #     for actor in self.engine.game_map.actors:
+            #         if actor.actor_type == self.engine.player.actor_type and self.engine.game_map.visible[actor.x, actor.y] and self.entity.actor_type != self.engine.player.actor_type :
+            #             actor.ai = ai.HostileNeutral(actor,self.entity.actor_type)
             
             if statusEffect.FROZEN in target.fighter.status:
                 damage *= self.entity.fighter.magic_total+1

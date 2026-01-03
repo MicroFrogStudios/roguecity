@@ -13,4 +13,5 @@
 - DONE talk interaction showing a pop up C2
 - DONE hungryheads enter feasting ai when eating rat, always prefer rats when present C2
 - lost warrior's ai goes against hostiles automatically C1
+- Scroll of finding: consumable that points towars a valuable in this floor, if not valuable found, it is not consumed C2
 ## in construction

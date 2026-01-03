@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from components.fighter_component import Fighter
     from map.game_map import GameMap
     from classes.item import Item
+    # from classes.faction import Faction
 
 from components.inventory_component import Inventory, Equipment
     
@@ -24,6 +25,9 @@ class Actor(Entity):
         PLAYER = "PLAYER"
         MONSTER = "MONSTER"
         CRITTER = "CRITTER"
+
+
+         
             
     def __init__(
         self,
@@ -47,6 +51,7 @@ class Actor(Entity):
         loot_chance: tuple[int,int] = (1,1),
         loot_table : dict[str,list] = None,
         surname = None
+        
 
     ):
         super().__init__(
@@ -91,7 +96,6 @@ class Actor(Entity):
 
         self.loot_table =  loot_table
         self.loot_chance = loot_chance
-
 
     @property
     def is_alive(self) -> bool:
